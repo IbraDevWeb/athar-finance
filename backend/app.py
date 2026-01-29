@@ -8,10 +8,10 @@ from api.routes.portfolio import portfolio_bp
 def create_app():
     app = Flask(__name__)
     
-    # 👇 CORRECTION MAJEURE ICI : On autorise explicitement toutes les origines (*)
-    # Cela règle le problème "Blocked by CORS policy"
+    # 👇 On autorise toutes les origines (*) pour éviter les blocages CORS
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
+    # Enregistrement des routes (Blueprints)
     app.register_blueprint(screening_bp, url_prefix='/api/screening')
     app.register_blueprint(simulation_bp, url_prefix='/api/simulation')
     app.register_blueprint(zakat_bp, url_prefix='/api/zakat')
@@ -23,6 +23,10 @@ def create_app():
 
     return app
 
+# 👇 CORRECTION CRUCIALE POUR RENDER :
+# On crée l'application ici (niveau global) pour que Gunicorn puisse la trouver.
+app = create_app()
+
 if __name__ == '__main__':
-    app = create_app()
+    # Ceci ne s'exécute que si tu lances "python app.py" sur ton PC
     app.run(host='0.0.0.0', port=5000, debug=True)
