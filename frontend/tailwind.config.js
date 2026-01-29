@@ -1,19 +1,20 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  darkMode: 'class', // 👈 C'est la ligne magique qui active le bouton manuel
   theme: {
     extend: {
       fontFamily: {
-        // On force l'utilisation des polices qu'on vient d'importer
-        sans: ['Inter', 'sans-serif'], 
-        display: ['"Playfair Display"', 'serif'],
+        sans: ['Inter', 'sans-serif'],
+        display: ['Playfair Display', 'serif'],
       },
       colors: {
         brand: {
-          dark: '#050505',
-          paper: '#0a0a0a',
-          surface: '#121212',
-          gold: '#D4AF37',
+          dark: '#050505',       // Noir profond (Mode Sombre)
+          paper: '#f8f9fa',      // Blanc cassé (Mode Clair - Fond)
+          surface: '#ffffff',    // Blanc pur (Mode Clair - Cartes)
+          gold: '#D4AF37',       // Or
+          'gold-light': '#F3E5AB',
           muted: '#525252',
         }
       },
@@ -22,6 +23,7 @@ export default {
       },
       boxShadow: {
         'glow': '0 0 20px rgba(212, 175, 55, 0.15)',
+        'soft': '0 4px 20px rgba(0, 0, 0, 0.05)', // Ombre douce pour le mode clair
       }
     },
   },

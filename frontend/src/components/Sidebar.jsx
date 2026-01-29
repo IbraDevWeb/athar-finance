@@ -17,7 +17,7 @@ export default function Sidebar({ activeTab, onNavigate, isMobile, closeMobileMe
         className={`w-full flex items-center gap-4 px-5 py-3.5 transition-all duration-300 group relative rounded-xl mx-2 my-1
           ${isActive 
             ? 'bg-brand-gold/10 text-brand-gold' 
-            : 'text-gray-400 hover:text-white hover:bg-white/5'
+            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-brand-dark dark:hover:text-white'
           } ${isMobile ? 'max-w-[90%]' : 'w-[90%]'}`}
       >
         <Icon 
@@ -28,66 +28,56 @@ export default function Sidebar({ activeTab, onNavigate, isMobile, closeMobileMe
         <span className={`text-sm tracking-wide ${isActive ? 'font-bold' : 'font-medium'}`}>
           {label}
         </span>
-        
-        {/* Petite barre lumineuse à gauche si actif */}
         {isActive && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-brand-gold rounded-full shadow-[0_0_10px_#D4AF37]"></div>
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-brand-gold rounded-full"></div>
         )}
       </button>
     );
   };
 
   return (
-    <div className="h-full flex flex-col bg-brand-dark border-r border-white/5">
+    <div className="h-full flex flex-col bg-white dark:bg-brand-dark transition-colors duration-300">
       
-      {/* LOGO AREA */}
+      {/* LOGO */}
       <div className="p-8 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-gradient-gold flex items-center justify-center shadow-glow">
-          <span className="text-brand-dark font-display font-bold text-xl">A</span>
+        <div className="w-9 h-9 rounded-lg bg-gradient-gold flex items-center justify-center text-white shadow-glow">
+          <span className="font-display font-bold text-xl">A</span>
         </div>
         <div>
-          <h1 className="font-display text-lg font-bold text-white tracking-widest leading-none">
+          <h1 className="font-display text-lg font-bold text-brand-dark dark:text-white tracking-widest leading-none">
             ATHAR
           </h1>
           <p className="text-[9px] text-brand-gold uppercase tracking-[0.3em] mt-1">Private Finance</p>
         </div>
       </div>
 
-      {/* NAVIGATION */}
+      {/* NAV */}
       <nav className="flex-1 overflow-y-auto py-4 space-y-1 custom-scrollbar">
-        <div className="px-6 mb-2 mt-2">
-            <span className="text-[10px] font-bold text-brand-muted uppercase tracking-widest">Général</span>
-        </div>
+        <MenuSection label="Général" />
         <NavItem id="home" icon={LayoutDashboard} label="Tableau de Bord" />
         <NavItem id="watchlist" icon={Heart} label="Watchlist" />
 
-        <div className="px-6 mb-2 mt-6">
-            <span className="text-[10px] font-bold text-brand-muted uppercase tracking-widest">Marchés</span>
-        </div>
+        <MenuSection label="Marchés" />
         <NavItem id="screener" icon={Search} label="Screener Pro" />
         <NavItem id="comparator" icon={Scale} label="Comparateur" />
 
-        <div className="px-6 mb-2 mt-6">
-            <span className="text-[10px] font-bold text-brand-muted uppercase tracking-widest">Patrimoine</span>
-        </div>
+        <MenuSection label="Patrimoine" />
         <NavItem id="portfolio" icon={Wallet} label="Mon Portefeuille" />
         <NavItem id="simulator" icon={TrendingUp} label="Projections" />
         <NavItem id="zakat" icon={Calculator} label="Zakat & Purif." />
 
-        <div className="px-6 mb-2 mt-6">
-            <span className="text-[10px] font-bold text-brand-muted uppercase tracking-widest">Savoir</span>
-        </div>
+        <MenuSection label="Savoir" />
         <NavItem id="academy" icon={BookOpen} label="Académie" />
       </nav>
 
-      {/* USER FOOTER */}
-      <div className="p-4 border-t border-white/5 mx-4 mb-4">
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 backdrop-blur-sm group cursor-pointer hover:border-brand-gold/30 transition-colors">
-            <div className="w-8 h-8 rounded-full bg-brand-surface border border-white/10 flex items-center justify-center text-xs text-brand-gold font-bold">
+      {/* FOOTER */}
+      <div className="p-4 border-t border-gray-100 dark:border-white/5 mx-4 mb-4">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 cursor-pointer hover:border-brand-gold/30 transition-colors">
+            <div className="w-8 h-8 rounded-full bg-white dark:bg-white/10 flex items-center justify-center text-xs text-brand-gold font-bold shadow-sm">
                 <User size={14} />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white truncate group-hover:text-brand-gold transition-colors">Investisseur</p>
+                <p className="text-xs font-bold text-gray-700 dark:text-white truncate">Investisseur</p>
                 <p className="text-[9px] text-emerald-500">● Connecté</p>
             </div>
         </div>
@@ -95,3 +85,9 @@ export default function Sidebar({ activeTab, onNavigate, isMobile, closeMobileMe
     </div>
   );
 }
+
+const MenuSection = ({ label }) => (
+    <div className="px-6 mb-2 mt-6">
+        <span className="text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest">{label}</span>
+    </div>
+);
