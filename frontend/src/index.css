@@ -4,63 +4,41 @@
 @tailwind components;
 @tailwind utilities;
 
-/* --- 1. CONFIGURATION DES MODES --- */
-
-/* MODE CLAIR (Par défaut) */
+/* --- BASE --- */
 body {
-  background-color: #f8f9fa; /* Fond clair */
-  color: #1a1a1a;            /* Texte sombre (lisible) */
+  background-color: #f8f9fa; /* Gris très clair pour le jour (moins agressif que blanc pur) */
+  color: #111827;            /* Noir doux */
   -webkit-font-smoothing: antialiased;
 }
 
-/* MODE SOMBRE (Quand la classe .dark est active) */
 .dark body {
-  background-color: #050505; /* Fond noir */
-  color: #ffffff;            /* Texte blanc */
-}
-
-/* --- 2. INPUTS (Le correctif de contraste) --- */
-
-/* Input par défaut (Clair) */
-input, select, textarea {
-  background-color: #ffffff;
-  color: #1a1a1a;
-  border: 1px solid #e5e7eb;
-  outline: none;
-  transition: all 0.2s;
-}
-
-/* Input en Mode Sombre */
-.dark input, .dark select, .dark textarea {
-  background-color: #121212;
+  background-color: #050505; /* Noir profond */
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Focus (Clic) */
+/* --- INPUTS (Contraste forcé) --- */
+input, select, textarea {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #e5e7eb !important;
+  outline: none;
+}
+
+.dark input, .dark select, .dark textarea {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
 input:focus, select:focus, textarea:focus {
-  border-color: #D4AF37;
-  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.1);
+  border-color: #D4AF37 !important;
 }
 
-/* --- 3. SCROLLBAR --- */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
+/* --- SCROLLBAR --- */
+::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
 .dark ::-webkit-scrollbar-thumb { background: #333; }
-::-webkit-scrollbar-thumb:hover { background: #D4AF37; }
 
-/* --- 4. CLASSES UTILITAIRES --- */
-.glass {
-  background: rgba(255, 255, 255, 0.8); /* Glass clair */
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-}
-
-.dark .glass {
-  background: rgba(255, 255, 255, 0.03); /* Glass sombre */
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
+/* --- ANIMATIONS --- */
 .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

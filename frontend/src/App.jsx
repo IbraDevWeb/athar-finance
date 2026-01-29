@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Sun, Moon } from 'lucide-react'; // Ajout icônes Sun/Moon
+import { Menu, X, Sun, Moon } from 'lucide-react'; 
 import Sidebar from './components/Sidebar';
 
-// Imports Modules
+// Imports des Modules
 import Home from "./modules/Home";
 import Screener from "./modules/ScreenerModule";
 import Simulator from "./modules/SimulatorModule";
@@ -13,13 +13,15 @@ import Watchlist from "./modules/WatchlistModule";
 import Comparator from "./modules/ComparatorModule";
 
 function App() {
+  // États de navigation
   const [currentPage, setCurrentPage] = useState('home');
   const [screenerTicker, setScreenerTicker] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // --- LOGIQUE DARK MODE ---
-  const [isDarkMode, setIsDarkMode] = useState(false); // Faux par défaut = Mode Clair
+  // États du Thème (Dark Mode)
+  const [isDarkMode, setIsDarkMode] = useState(false); // Faux = Mode Clair par défaut
 
+  // Fonction pour changer le thème
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
     if (!isDarkMode) {
@@ -28,46 +30,55 @@ function App() {
       document.documentElement.classList.remove('dark');
     }
   };
-  // -------------------------
 
+  // Fonction de navigation
   const handleNavigate = (page) => {
     setCurrentPage(page);
-    setIsMobileMenuOpen(false);
+    setIsMobileMenuOpen(false); // Ferme le menu mobile après clic
   };
 
+  // Fonction spéciale pour "Analyser" depuis la Watchlist
   const handleWatchlistAnalyze = (ticker) => {
     setScreenerTicker(ticker);
     handleNavigate('screener');
   };
 
   return (
-    // La classe de base gère maintenant les deux modes via index.css
-    <div className="flex h-screen overflow-hidden font-sans selection:bg-brand-gold/30 selection:text-brand-gold transition-colors duration-300">
+    // CONTENEUR PRINCIPAL (Gère le fond global Jour/Nuit)
+    <div className="flex h-screen overflow-hidden font-sans bg-[#f8f9fa] dark:bg-[#050505] transition-colors duration-300 text-gray-900 dark:text-white">
       
-      {/* --- HEADER MOBILE --- */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-brand-dark/90 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 p-4 flex justify-between items-center transition-colors">
+      {/* --- HEADER MOBILE (Visible uniquement sur téléphone) --- */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-[#050505] border-b border-gray-200 dark:border-white/10 p-4 flex justify-between items-center transition-colors">
         <div className="flex items-center gap-3">
-             <div className="w-8 h-8 rounded bg-gradient-gold flex items-center justify-center text-white shadow-glow">
+             <div className="w-8 h-8 rounded bg-gradient-to-br from-brand-gold to-yellow-600 flex items-center justify-center text-white shadow-lg">
                  <span className="font-display font-bold text-sm">A</span>
              </div>
-             <span className="font-display font-bold text-brand-dark dark:text-white tracking-widest text-sm">ATHAR</span>
+             <span className="font-display font-bold text-gray-900 dark:text-white tracking-widest text-sm">ATHAR</span>
         </div>
+        
         <div className="flex gap-2">
             {/* Bouton Thème Mobile */}
-            <button onClick={toggleTheme} className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg">
+            <button 
+                onClick={toggleTheme} 
+                className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            >
                 {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-brand-gold bg-brand-gold/10 rounded-lg">
+            {/* Bouton Menu Mobile */}
+            <button 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+                className="p-2 text-brand-gold bg-brand-gold/10 rounded-lg hover:bg-brand-gold/20 transition-colors"
+            >
                 {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
         </div>
       </div>
 
-      {/* --- SIDEBAR --- */}
+      {/* --- SIDEBAR (Barre Latérale) --- */}
       <aside className={`
           fixed inset-y-0 left-0 z-40 w-72 
-          bg-white dark:bg-brand-dark border-r border-gray-100 dark:border-white/5 
-          transition-all duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]
+          bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-white/5 
+          transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
           lg:relative lg:translate-x-0
       `}>
@@ -79,29 +90,32 @@ function App() {
         />
       </aside>
 
-      {/* Overlay Mobile */}
+      {/* Overlay Sombre (Quand menu mobile ouvert) */}
       {isMobileMenuOpen && (
-        <div onClick={() => setIsMobileMenuOpen(false)} className="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm"></div>
+        <div 
+            onClick={() => setIsMobileMenuOpen(false)} 
+            className="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm"
+        ></div>
       )}
 
       {/* --- CONTENU PRINCIPAL --- */}
-      <main className="flex-1 overflow-y-auto relative w-full pt-20 lg:pt-0 bg-brand-paper dark:bg-black/95 transition-colors">
+      <main className="flex-1 overflow-y-auto relative w-full pt-20 lg:pt-0 scroll-smooth">
         <div className="max-w-7xl mx-auto p-4 lg:p-10 min-h-screen">
           
-          {/* Header Desktop (Avec Bouton Thème) */}
-          <div className="hidden lg:flex justify-end mb-4">
+          {/* Header Desktop (Bouton Thème) */}
+          <div className="hidden lg:flex justify-end mb-6">
              <button 
                 onClick={toggleTheme} 
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:border-brand-gold transition-all shadow-sm"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:border-brand-gold hover:text-brand-gold transition-all shadow-sm"
              >
                 {isDarkMode ? <><Sun size={14} /> Mode Jour</> : <><Moon size={14} /> Mode Nuit</>}
              </button>
           </div>
 
-          {/* Titre de Page */}
+          {/* Titre de la Page (Sauf Accueil) */}
           {currentPage !== 'home' && (
-             <header className="mb-8 animate-fade-in border-b border-gray-100 dark:border-white/5 pb-6">
-                <h2 className="text-3xl font-display font-bold text-brand-dark dark:text-white mb-2 flex items-center gap-3">
+             <header className="mb-8 animate-fade-in border-b border-gray-200 dark:border-white/10 pb-6">
+                <h2 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
                   <span className="w-1.5 h-1.5 rounded-full bg-brand-gold"></span>
                   {currentPage === 'screener' && 'Screener Pro'}
                   {currentPage === 'simulator' && 'Projections'}
@@ -111,11 +125,13 @@ function App() {
                   {currentPage === 'portfolio' && 'Portefeuille'}
                   {currentPage === 'academy' && 'Académie'}
                 </h2>
-                <p className="text-gray-500 dark:text-gray-400 text-sm font-light pl-5">Gérez vos actifs avec précision et éthique.</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm font-light pl-5">
+                    Gérez vos actifs avec précision et éthique.
+                </p>
              </header>
           )}
 
-          {/* Modules */}
+          {/* Affichage des Modules */}
           <div className="animate-fade-in">
             {currentPage === 'home' && <Home onNavigate={handleNavigate} />}
             {currentPage === 'screener' && <Screener autoSearch={screenerTicker} />} 
@@ -127,7 +143,8 @@ function App() {
             {currentPage === 'watchlist' && <Watchlist onAnalyze={handleWatchlistAnalyze} />}
           </div>
 
-          <footer className="mt-20 py-8 text-center border-t border-gray-100 dark:border-white/5">
+          {/* Footer Global */}
+          <footer className="mt-20 py-8 text-center border-t border-gray-200 dark:border-white/5">
              <p className="text-gray-400 text-[10px] uppercase tracking-widest hover:text-brand-gold transition-colors">
                Athar Private Finance • v2.2
              </p>
