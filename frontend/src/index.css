@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Le Fond Athar Pro */
+body {
+  @apply bg-brand-paper text-brand-dark font-sans antialiased;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+/* Scrollbar Dorée */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #dcd6c5; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #c5a059; }
+
+@layer components {
+  /* Effet Verre Athar */
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border border-brand-gold/20 shadow-sm;
+  }
+  
+  .glass-dark {
+    @apply bg-brand-dark/95 backdrop-blur-md border border-brand-gold/10 text-white shadow-xl;
+  }
+
+  /* Boutons Or */
+  .btn-gold {
+    @apply bg-brand-gold text-white font-bold uppercase tracking-widest text-xs px-6 py-3 rounded-lg hover:bg-[#b08d4b] transition-all shadow-md active:scale-95;
+  }
+
+  .btn-outline {
+    @apply border border-brand-gold/30 text-brand-dark hover:border-brand-gold hover:text-brand-gold transition-all rounded-lg px-6 py-3 font-bold uppercase tracking-widest text-xs;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

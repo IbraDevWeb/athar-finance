@@ -1,0 +1,6 @@
+﻿flask
+flask-cors
+yfinance
+pandas
+gunicorn
+numpy
