@@ -1,30 +1,30 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'], // Assure-toi d'importer cette police ou utilise system-ui
+        display: ['Playfair Display', 'serif'],
+      },
       colors: {
         brand: {
-          gold: '#c5a059',       // L'Or Athar
-          'gold-light': '#e6cca0',
-          dark: '#1a1c23',       // Le Bleu Nuit Profond
-          'dark-lighter': '#252830',
-          paper: '#f9f7f2',      // Le fond papier crème
-          emerald: '#10b981',    // Pour les indicateurs "Positifs"
-          red: '#ef4444',        // Pour les indicateurs "Négatifs"
+          dark: '#050505',       // Noir quasi absolu (Luxe)
+          paper: '#0a0a0a',      // Gris anthracite très sombre
+          surface: '#121212',    // Pour les cartes
+          gold: '#D4AF37',       // Or Métallique
+          'gold-light': '#F3E5AB',
+          muted: '#525252',
         }
       },
-      fontFamily: {
-        serif: ['"Libre Baskerville"', 'serif'], // Pour les titres
-        display: ['Cinzel', 'serif'],            // Pour les grands titres
-        sans: ['Inter', 'sans-serif'],           // Pour le texte
-        arabic: ['Amiri', 'serif'],              // Pour les termes arabes
-      },
       backgroundImage: {
-        'grain': "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E\")",
+        'gradient-gold': 'linear-gradient(135deg, #D4AF37 0%, #AA8A29 100%)',
+        'glass': 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.005) 100%)',
+        'glow-radial': 'radial-gradient(circle, rgba(212,175,55,0.15) 0%, transparent 70%)',
+      },
+      boxShadow: {
+        'glow': '0 0 20px rgba(212, 175, 55, 0.1)',
+        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
       }
     },
   },
