@@ -4,7 +4,7 @@ import {
   CheckCircle, Activity, DollarSign, BarChart3, ShieldCheck, FileText, Info 
 } from 'lucide-react';
 
-const API_URL = 'https://athar-api.onrender.com';
+const API_URL = 'https://athar-api.onrender.com/api';
 
 export default function ScreenerModule({ autoSearch }) {
   const [ticker, setTicker] = useState('');
