@@ -1,32 +1,33 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
-from api.routes.screening import screening_bp
-from api.routes.simulation import simulation_bp
-from api.routes.zakat import zakat_bp 
-from api.routes.portfolio import portfolio_bp
+import os
 
-def create_app():
-    app = Flask(__name__)
-    
-    # 👇 On autorise toutes les origines (*) pour éviter les blocages CORS
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+# Import de tes routes (Vérifie que le fichier backend/routes/screening.py existe bien)
+from routes.screening import screening_bp
 
-    # Enregistrement des routes (Blueprints)
-    app.register_blueprint(screening_bp, url_prefix='/api/screening')
-    app.register_blueprint(simulation_bp, url_prefix='/api/simulation')
-    app.register_blueprint(zakat_bp, url_prefix='/api/zakat')
-    app.register_blueprint(portfolio_bp, url_prefix='/api/portfolio')
-    
-    @app.route('/api/health')
-    def health():
-        return {'status': 'ok', 'message': 'Modular API Running'}
+app = Flask(__name__)
 
-    return app
+# --- 1. ACTIVATION DE CORS (LA CORRECTION) ---
+# Cela autorise toutes les origines (*) à accéder à ton API.
+# C'est ce qui va faire disparaître l'erreur rouge "CORS Policy" de ta console.
+CORS(app, resources={r"/*": {"origins": "*"}})
 
-# 👇 CORRECTION CRUCIALE POUR RENDER :
-# On crée l'application ici (niveau global) pour que Gunicorn puisse la trouver.
-app = create_app()
+# --- 2. ENREGISTREMENT DES BLUEPRINTS ---
+# Si ton frontend appelle "https://.../screening/analyze", le préfixe doit être /screening
+app.register_blueprint(screening_bp, url_prefix='/screening')
 
+# --- 3. ROUTE D'ACCUEIL (Health Check) ---
+# Utile pour vérifier si le serveur est en vie en allant sur l'URL de base
+@app.route('/')
+def home():
+    return jsonify({
+        "status": "online",
+        "message": "API Athar Finance opérationnelle 🚀",
+        "version": "2.0"
+    })
+
+# --- 4. LANCEMENT DU SERVEUR ---
 if __name__ == '__main__':
-    # Ceci ne s'exécute que si tu lances "python app.py" sur ton PC
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Render donne un port via la variable d'environnement PORT
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port)
