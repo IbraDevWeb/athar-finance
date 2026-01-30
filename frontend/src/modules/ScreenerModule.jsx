@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, ArrowRight, X, TrendingUp, AlertTriangle, 
-  CheckCircle, Activity, DollarSign, BarChart3, ShieldCheck 
+  CheckCircle, Activity, DollarSign, BarChart3, ShieldCheck, FileText, Info 
 } from 'lucide-react';
 
 const API_URL = 'https://athar-api.onrender.com';
@@ -12,18 +12,51 @@ export default function ScreenerModule({ autoSearch }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // --- 1. LISTE DES PRESETS (Boutons rapides) ---
+  // --- 1. LISTE DES PRESETS (AVEC VRAIS NOMS) ---
   const PRESETS = [
-    { label: "US Tech", icon: "🇺🇸", tickers: ["AAPL", "MSFT", "GOOGL", "TSLA", "NVDA", "META", "AMZN"] },
-    { label: "CAC 40", icon: "🇫🇷", tickers: ["MC.PA", "OR.PA", "AIR.PA", "RMS.PA", "SAN.PA", "TTE.PA"] },
-    { label: "Halal & Golfe", icon: "☪️", tickers: ["2222.SR", "1120.SR", "SPUS", "HLAL", "ISDW.L"] },
-    { label: "Cryptos", icon: "🪙", tickers: ["BTC-USD", "ETH-USD", "SOL-USD", "AVAX-USD"] },
-    { label: "Or & Divers", icon: "🥇", tickers: ["GC=F", "SI=F", "CL=F"] },
+    { 
+      label: "US Tech", 
+      icon: "🇺🇸", 
+      assets: [
+        { t: "AAPL", n: "Apple" }, { t: "MSFT", n: "Microsoft" }, { t: "GOOGL", n: "Google" }, 
+        { t: "TSLA", n: "Tesla" }, { t: "NVDA", n: "NVIDIA" }, { t: "META", n: "Meta (FB)" }, 
+        { t: "AMZN", n: "Amazon" }, { t: "NFLX", n: "Netflix" }, { t: "ADBE", n: "Adobe" },
+        { t: "CRM", n: "Salesforce" }, { t: "AMD", n: "AMD" }, { t: "INTC", n: "Intel" }
+      ] 
+    },
+    { 
+      label: "France (CAC)", 
+      icon: "🇫🇷", 
+      assets: [
+        { t: "MC.PA", n: "LVMH" }, { t: "OR.PA", n: "L'Oréal" }, { t: "TTE.PA", n: "TotalEnergies" }, 
+        { t: "SAN.PA", n: "Sanofi" }, { t: "AIR.PA", n: "Airbus" }, { t: "RMS.PA", n: "Hermès" }, 
+        { t: "AI.PA", n: "Air Liquide" }, { t: "SU.PA", n: "Schneider" }, { t: "BNP.PA", n: "BNP Paribas" },
+        { t: "GLE.PA", n: "Soc. Générale" }, { t: "BN.PA", n: "Danone" }, { t: "HO.PA", n: "Thales" }
+      ] 
+    },
+    { 
+      label: "Halal & Golfe", 
+      icon: "☪️", 
+      assets: [
+        { t: "SPUS", n: "S&P 500 Sharia" }, { t: "HLAL", n: "Wahed FTSE" }, { t: "ISDW.L", n: "World Islamic" },
+        { t: "2222.SR", n: "Saudi Aramco" }, { t: "1120.SR", n: "Al Rajhi Bank" }, { t: "SPSK", n: "Sukuk Global" },
+        { t: "GLDM", n: "Gold Mini" }, { t: "UMRA", n: "Wahed Dow Jones" }
+      ] 
+    },
+    { 
+      label: "Cryptos", 
+      icon: "🪙", 
+      assets: [
+        { t: "BTC-USD", n: "Bitcoin" }, { t: "ETH-USD", n: "Ethereum" }, { t: "SOL-USD", n: "Solana" }, 
+        { t: "BNB-USD", n: "Binance Coin" }, { t: "ADA-USD", n: "Cardano" }, { t: "XRP-USD", n: "Ripple" },
+        { t: "AVAX-USD", n: "Avalanche" }, { t: "DOT-USD", n: "Polkadot" }
+      ] 
+    }
   ];
 
   const [activePreset, setActivePreset] = useState(PRESETS[0]);
 
-  // --- 2. GESTION AUTOMATIQUE (Si on vient de la Watchlist) ---
+  // --- 2. GESTION AUTOMATIQUE ---
   useEffect(() => {
     if (autoSearch) {
       setTicker(autoSearch);
@@ -31,7 +64,7 @@ export default function ScreenerModule({ autoSearch }) {
     }
   }, [autoSearch]);
 
-  // --- 3. FONCTION DE RECHERCHE (API) ---
+  // --- 3. RECHERCHE API ---
   const fetchAnalysis = async (searchTicker) => {
     if (!searchTicker) return;
     setLoading(true);
@@ -55,7 +88,7 @@ export default function ScreenerModule({ autoSearch }) {
       }
     } catch (err) {
       console.error(err);
-      setError("Impossible de contacter le serveur. Vérifiez votre connexion.");
+      setError("Impossible de contacter le serveur.");
     } finally {
       setLoading(false);
     }
@@ -63,28 +96,27 @@ export default function ScreenerModule({ autoSearch }) {
 
   const handleSearch = () => fetchAnalysis(ticker);
 
-  // --- 4. AFFICHAGE (RENDER) ---
   return (
-    <div className="animate-fade-in max-w-5xl mx-auto pb-20">
+    <div className="animate-fade-in max-w-6xl mx-auto pb-20">
       
       {/* HEADER */}
-      <div className="text-center mb-10 space-y-4">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-gold/10 text-brand-gold border border-brand-gold/20 shadow-glow mb-4">
-            <Search size={16} />
-            <span className="text-xs font-bold uppercase tracking-widest">Moteur de Recherche Islamique</span>
+      <div className="text-center mb-10 space-y-4 pt-4">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-gold/10 text-brand-gold border border-brand-gold/20 shadow-glow mb-2">
+            <Search size={14} />
+            <span className="text-[10px] font-bold uppercase tracking-widest">Moteur de Recherche Islamique</span>
         </div>
         <h1 className="text-3xl md:text-5xl font-display font-bold text-gray-900 dark:text-white">
           Screener Pro <span className="text-brand-gold">&</span> Multi-Actifs
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto text-sm md:text-base">
-          Analysez instantanément la conformité charia de plus de 5000 actions, ETFs et Cryptomonnaies selon les normes AAOIFI.
+        <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
+          Analysez la conformité charia de 5000+ actifs. 
+          <span className="hidden md:inline"> Actions, ETFs, Cryptos et Matières Premières.</span>
         </p>
       </div>
 
-      {/* --- BARRE DE RECHERCHE RESPONSIVE (CORRIGÉE) --- */}
-      <div className="bg-white dark:bg-[#121212] p-2 md:p-4 rounded-3xl shadow-xl border border-gray-100 dark:border-white/10 mb-8 max-w-3xl mx-auto transition-colors">
+      {/* --- BARRE DE RECHERCHE --- */}
+      <div className="bg-white dark:bg-[#121212] p-2 md:p-4 rounded-3xl shadow-xl border border-gray-100 dark:border-white/10 mb-10 max-w-3xl mx-auto transition-colors">
           <div className="flex flex-col md:flex-row gap-3">
-              {/* INPUT */}
               <div className="relative flex-1 group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <Search size={20} className="text-gray-400 group-focus-within:text-brand-gold transition-colors" />
@@ -94,7 +126,7 @@ export default function ScreenerModule({ autoSearch }) {
                       value={ticker}
                       onChange={(e) => setTicker(e.target.value.toUpperCase())}
                       onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                      placeholder="Entrez un ticker (ex: AAPL, BTC...)"
+                      placeholder="Rechercher (ex: LVMH, AAPL, BTC...)"
                       className="block w-full pl-12 pr-10 py-4 border-2 border-transparent bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-400 rounded-2xl focus:outline-none focus:bg-white dark:focus:bg-[#0a0a0a] focus:border-brand-gold transition-all font-bold text-lg"
                   />
                   {ticker && (
@@ -107,7 +139,6 @@ export default function ScreenerModule({ autoSearch }) {
                   )}
               </div>
 
-              {/* BOUTON (Plein écran sur mobile) */}
               <button
                   onClick={handleSearch}
                   disabled={loading}
@@ -116,7 +147,7 @@ export default function ScreenerModule({ autoSearch }) {
                   {loading ? (
                       <>
                           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
-                          <span>Analyse...</span>
+                          <span>...</span>
                       </>
                   ) : (
                       <>
@@ -128,17 +159,17 @@ export default function ScreenerModule({ autoSearch }) {
           </div>
       </div>
 
-      {/* --- PRESETS (BOUTONS RAPIDES) --- */}
-      <div className="mb-12 overflow-x-auto pb-4 custom-scrollbar">
-          {/* Onglets Catégories */}
-          <div className="flex justify-center gap-4 mb-6 min-w-max px-4">
+      {/* --- PRESETS (GRILLE AMÉLIORÉE) --- */}
+      <div className="mb-16">
+          {/* Onglets */}
+          <div className="flex flex-wrap justify-center gap-3 mb-8 px-4">
             {PRESETS.map((preset) => (
               <button
                 key={preset.label}
                 onClick={() => setActivePreset(preset)}
-                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all border ${
+                className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all border ${
                   activePreset.label === preset.label
-                    ? 'bg-brand-gold text-brand-dark border-brand-gold shadow-lg'
+                    ? 'bg-brand-gold text-brand-dark border-brand-gold shadow-md transform scale-105'
                     : 'bg-white dark:bg-white/5 text-gray-500 border-gray-200 dark:border-white/10 hover:border-brand-gold hover:text-brand-gold'
                 }`}
               >
@@ -148,35 +179,38 @@ export default function ScreenerModule({ autoSearch }) {
             ))}
           </div>
 
-          {/* Grille des Tickers du Preset */}
-          <div className="flex flex-wrap justify-center gap-3 px-4">
-              {activePreset.tickers.map((t) => (
+          {/* Grille Cartes */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 px-4 max-w-6xl mx-auto">
+              {activePreset.assets.map((asset) => (
                   <button
-                      key={t}
-                      onClick={() => { setTicker(t); fetchAnalysis(t); }}
-                      className="px-6 py-3 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 rounded-xl hover:border-brand-gold hover:shadow-glow transition-all group"
+                      key={asset.t}
+                      onClick={() => { setTicker(asset.t); fetchAnalysis(asset.t); }}
+                      className="flex flex-col items-center justify-center p-4 bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 rounded-2xl hover:border-brand-gold hover:shadow-glow hover:-translate-y-1 transition-all group h-full"
                   >
-                      <span className="font-bold text-gray-700 dark:text-gray-200 group-hover:text-brand-gold">{t}</span>
+                      <span className="text-sm font-bold text-gray-800 dark:text-white text-center leading-tight mb-1 group-hover:text-brand-gold transition-colors">
+                        {asset.n}
+                      </span>
+                      <span className="text-[10px] font-mono font-bold text-gray-400 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded">
+                        {asset.t}
+                      </span>
                   </button>
               ))}
           </div>
       </div>
 
-      {/* --- AFFICHAGE DES RÉSULTATS --- */}
+      {/* --- RÉSULTATS --- */}
       
-      {/* 1. ERREUR */}
       {error && (
-        <div className="max-w-2xl mx-auto p-6 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/30 rounded-2xl flex items-center gap-4 text-red-600 dark:text-red-400 animate-fade-in">
+        <div className="max-w-2xl mx-auto p-6 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/30 rounded-2xl flex items-center gap-4 text-red-600 dark:text-red-400 animate-fade-in mb-10">
           <AlertTriangle size={24} />
           <p className="font-medium">{error}</p>
         </div>
       )}
 
-      {/* 2. RÉSULTAT */}
       {result && !loading && (
-        <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-fade-in">
+        <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-fade-in transition-colors">
             
-            {/* EN-TÊTE RÉSULTAT */}
+            {/* EN-TÊTE */}
             <div className="p-6 md:p-10 border-b border-gray-100 dark:border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-gray-50/50 dark:bg-white/[0.02]">
                 <div>
                     <div className="flex items-center gap-3 mb-2">
@@ -193,31 +227,31 @@ export default function ScreenerModule({ autoSearch }) {
                     </p>
                 </div>
 
-                {/* BADGE HALAL / HARAM */}
-                <div className={`px-8 py-4 rounded-2xl border-2 flex items-center gap-3 shadow-lg ${
+                {/* VERDICT */}
+                <div className={`px-8 py-4 rounded-2xl border-2 flex items-center gap-4 shadow-lg ${
                     result.compliance?.is_halal
                         ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500 text-emerald-600 dark:text-emerald-400'
                         : 'bg-red-50 dark:bg-red-900/10 border-red-500 text-red-600 dark:text-red-400'
                 }`}>
-                    {result.compliance?.is_halal ? <CheckCircle size={32} /> : <AlertTriangle size={32} />}
+                    {result.compliance?.is_halal ? <CheckCircle size={40} /> : <AlertTriangle size={40} />}
                     <div className="text-left">
                         <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Verdict Charia</p>
-                        <p className="text-2xl font-bold">{result.compliance?.is_halal ? "HALAL" : "HARAM"}</p>
+                        <p className="text-3xl font-bold font-display">{result.compliance?.is_halal ? "HALAL" : "HARAM"}</p>
                     </div>
                 </div>
             </div>
 
-            {/* CONTENU DÉTAILLÉ */}
+            {/* CONTENU ANALYSE */}
             <div className="p-6 md:p-10">
                 
-                {/* 3 JAUGES (Ratio Financiers) */}
+                {/* --- 1. ANALYSE FINANCIÈRE (3 BLOCS) --- */}
                 <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
                     <BarChart3 size={16} /> Analyse Financière (AAOIFI)
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                     
-                    {/* JAUGE 1 : DETTE (< 33%) */}
+                    {/* Jauge 1 : DETTE */}
                     <GaugeCard 
                         label="Dette / Market Cap"
                         value={result.ratios?.debt_ratio}
@@ -225,7 +259,7 @@ export default function ScreenerModule({ autoSearch }) {
                         isGood={result.ratios?.debt_ratio < 33}
                     />
 
-                    {/* JAUGE 2 : CASH (< 33%) */}
+                    {/* Jauge 2 : CASH */}
                     <GaugeCard 
                         label="Cash / Market Cap"
                         value={result.ratios?.cash_ratio}
@@ -233,16 +267,28 @@ export default function ScreenerModule({ autoSearch }) {
                         isGood={result.ratios?.cash_ratio < 33}
                     />
 
-                    {/* JAUGE 3 : REVENUS IMPURS (< 5%) */}
-                    <GaugeCard 
-                        label="Revenus Impurs (Intérêts)"
-                        value={result.ratios?.impure_ratio || 0}
-                        limit={5}
-                        isGood={(result.ratios?.impure_ratio || 0) < 5}
-                    />
+                    {/* Bloc 3 : REVENUS IMPURS (MANUEL) */}
+                    <div className="p-5 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-500/30 relative overflow-hidden flex flex-col justify-between h-full">
+                        <div className="flex justify-between items-start mb-2">
+                            <span className="text-[10px] font-bold uppercase text-amber-700 dark:text-amber-500">
+                                Revenus Impurs
+                            </span>
+                            <Info size={16} className="text-amber-500" />
+                        </div>
+                        
+                        <div>
+                            <p className="text-xs text-amber-800 dark:text-amber-400 font-medium leading-relaxed mb-3">
+                                ⚠️ Donnée non disponible automatiquement. Vérifiez le rapport annuel.
+                            </p>
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-amber-600 dark:text-amber-500 bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg">
+                                <FileText size={12} />
+                                <span>Cible : Intérêts &lt; 5%</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* ANALYSE BUSINESS (Activité) */}
+                {/* --- 2. ACTIVITÉ & FONDAMENTAUX --- */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     
                     {/* Colonne Gauche : Activité */}
@@ -251,20 +297,23 @@ export default function ScreenerModule({ autoSearch }) {
                             <Activity size={16} /> Activité Commerciale
                         </h3>
                         <div className="space-y-4">
-                            <div className="flex justify-between p-3 bg-white dark:bg-black/20 rounded-lg">
+                            <div className="flex justify-between p-3 bg-white dark:bg-black/20 rounded-lg border border-gray-100 dark:border-white/5">
                                 <span className="text-sm text-gray-500">Secteur</span>
                                 <span className="text-sm font-bold text-gray-800 dark:text-white">{result.sector}</span>
                             </div>
-                            <div className="flex justify-between p-3 bg-white dark:bg-black/20 rounded-lg">
+                            <div className="flex justify-between p-3 bg-white dark:bg-black/20 rounded-lg border border-gray-100 dark:border-white/5">
                                 <span className="text-sm text-gray-500">Industrie</span>
                                 <span className="text-sm font-bold text-gray-800 dark:text-white truncate max-w-[200px]">{result.industry}</span>
                             </div>
-                            <div className={`p-4 rounded-xl border ${result.compliance?.business_check?.failed ? 'bg-red-100 border-red-200 text-red-800' : 'bg-emerald-100 border-emerald-200 text-emerald-800'}`}>
-                                <p className="text-xs font-bold uppercase mb-1">Analyse Mots-Clés</p>
+                            <div className={`p-4 rounded-xl border ${result.compliance?.business_check?.failed ? 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300'}`}>
+                                <p className="text-xs font-bold uppercase mb-1 flex items-center gap-2">
+                                    {result.compliance?.business_check?.failed ? <AlertTriangle size={12}/> : <ShieldCheck size={12}/>}
+                                    Screener Sectoriel
+                                </p>
                                 <p className="text-sm">
                                     {result.compliance?.business_check?.failed 
-                                        ? `⚠️ Détecté : ${result.compliance.business_check.found_keywords.join(', ')}`
-                                        : "✅ Aucune activité illicite majeure détectée (Alcool, Porc, Jeux, Banques...)"}
+                                        ? `Activité illicite détectée : ${result.compliance.business_check.found_keywords.join(', ')}`
+                                        : "Aucune activité illicite majeure détectée."}
                                 </p>
                             </div>
                         </div>
@@ -279,9 +328,9 @@ export default function ScreenerModule({ autoSearch }) {
                            <MetricBox label="PER (Price Earning)" value={result.technicals?.per || "N/A"} />
                            <MetricBox label="ROE (Rentabilité)" value={result.technicals?.roe ? `${result.technicals.roe}%` : "N/A"} />
                            <MetricBox label="Dividende" value={result.technicals?.dividend_yield ? `${result.technicals.dividend_yield}%` : "0%"} />
-                           <div className="p-3 bg-white dark:bg-black/20 rounded-xl border border-gray-100 dark:border-white/5">
-                               <p className="text-[10px] text-gray-400 uppercase font-bold">Qualité Bilan</p>
-                               <div className="flex text-brand-gold mt-1">
+                           <div className="p-3 bg-white dark:bg-black/20 rounded-xl border border-gray-100 dark:border-white/5 flex flex-col justify-center">
+                               <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Qualité Bilan</p>
+                               <div className="flex text-brand-gold">
                                    {'★'.repeat(4)}{'☆'}
                                </div>
                            </div>
@@ -293,8 +342,7 @@ export default function ScreenerModule({ autoSearch }) {
                 {/* DISCLAIMER */}
                 <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/10 text-center">
                     <p className="text-xs text-gray-400 italic">
-                        <ShieldCheck size={12} className="inline mr-1" />
-                        Les données financières sont fournies à titre indicatif via Yahoo Finance. Toujours vérifier le rapport annuel pour une précision à 100%.
+                        Les données sont fournies à titre indicatif. L'investisseur est responsable de sa purification finale.
                     </p>
                 </div>
             </div>
@@ -307,36 +355,29 @@ export default function ScreenerModule({ autoSearch }) {
 // --- SOUS-COMPOSANTS ---
 
 function GaugeCard({ label, value, limit, isGood }) {
-    // Calcul de la largeur de la barre (max 100%)
-    // On met à l'échelle : si la limite est 33%, on veut que 33% remplisse une bonne partie visuelle
-    // Ici on fait simple : width = (value / limit) * 70. Si value > limit, ça dépasse.
     const percent = Math.min((value / (limit * 1.5)) * 100, 100); 
     
     return (
-        <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/5 relative overflow-hidden group">
-            <div className="flex justify-between items-end mb-2 relative z-10">
+        <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/5 relative overflow-hidden group flex flex-col justify-between h-full">
+            <div className="flex justify-between items-end mb-3 relative z-10">
                 <span className="text-[10px] font-bold uppercase text-gray-500">{label}</span>
-                <span className={`text-lg font-mono font-bold ${isGood ? 'text-emerald-500' : 'text-red-500'}`}>
+                <span className={`text-xl font-mono font-bold ${isGood ? 'text-emerald-500' : 'text-red-500'}`}>
                     {value}%
                 </span>
             </div>
             
             {/* Barre de fond */}
-            <div className="h-2 w-full bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden relative z-10">
+            <div className="h-2 w-full bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden relative z-10 mb-2">
                 <div 
                     className={`h-full rounded-full transition-all duration-1000 ${isGood ? 'bg-emerald-500' : 'bg-red-500'}`}
                     style={{ width: `${percent}%` }}
                 ></div>
             </div>
             
-            {/* Seuil marker */}
-            <div className="mt-1 flex justify-between text-[9px] text-gray-400 relative z-10">
+            <div className="flex justify-between text-[9px] text-gray-400 relative z-10">
                 <span>0%</span>
-                <span className="font-bold text-brand-gold">Seuil: {limit}%</span>
+                <span className="font-bold text-brand-gold">Max: {limit}%</span>
             </div>
-
-            {/* Effet Glow au survol */}
-            <div className="absolute inset-0 bg-brand-gold/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
         </div>
     );
 }
