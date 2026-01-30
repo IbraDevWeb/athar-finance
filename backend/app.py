@@ -1,33 +1,32 @@
+import os
 from flask import Flask, jsonify
 from flask_cors import CORS
-import os
 
-# Import de tes routes (Vérifie que le fichier backend/routes/screening.py existe bien)
-from routes.screening import screening_bp
-
+# On définit l'app tout de suite pour éviter les erreurs de "gunicorn"
 app = Flask(__name__)
 
-# --- 1. ACTIVATION DE CORS (LA CORRECTION) ---
-# Cela autorise toutes les origines (*) à accéder à ton API.
-# C'est ce qui va faire disparaître l'erreur rouge "CORS Policy" de ta console.
+# 1. Autoriser le Frontend (CORS)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-# --- 2. ENREGISTREMENT DES BLUEPRINTS ---
-# Si ton frontend appelle "https://.../screening/analyze", le préfixe doit être /screening
-app.register_blueprint(screening_bp, url_prefix='/screening')
+# 2. Importer les routes avec gestion d'erreur
+try:
+    from routes.screening import screening_bp
+    # On enregistre la route sur /api/screening
+    app.register_blueprint(screening_bp, url_prefix='/api/screening')
+    print("✅ Routes Screening chargées avec succès.")
+except Exception as e:
+    print(f"❌ ERREUR IMPORT ROUTES: {e}")
+    # On continue quand même pour ne pas faire crasher le serveur entier
 
-# --- 3. ROUTE D'ACCUEIL (Health Check) ---
-# Utile pour vérifier si le serveur est en vie en allant sur l'URL de base
 @app.route('/')
 def home():
     return jsonify({
         "status": "online",
-        "message": "API Athar Finance opérationnelle 🚀",
-        "version": "2.0"
+        "message": "API Athar Finance V2 prête 🚀",
+        "routes_loaded": "screening_bp" in locals()
     })
 
-# --- 4. LANCEMENT DU SERVEUR ---
+# Pour le développement local
 if __name__ == '__main__':
-    # Render donne un port via la variable d'environnement PORT
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
