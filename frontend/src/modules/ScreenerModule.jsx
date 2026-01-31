@@ -12,7 +12,7 @@ export default function ScreenerModule({ autoSearch }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // --- 1. LISTE DES PRESETS (MISE À JOUR : MÉTAUX AU LIEU DE CRYPTOS) ---
+  // --- 1. LISTE DES PRESETS (MÉTAUX & COMMODITIES) ---
   const PRESETS = [
     { 
       label: "US Tech", 
@@ -40,26 +40,51 @@ export default function ScreenerModule({ autoSearch }) {
       assets: [
         { t: "SPUS", n: "S&P 500 Sharia" }, { t: "HLAL", n: "Wahed FTSE" }, { t: "ISDW.L", n: "World Islamic" },
         { t: "2222.SR", n: "Saudi Aramco" }, { t: "1120.SR", n: "Al Rajhi Bank" }, { t: "SPSK", n: "Sukuk Global" },
-        { t: "GLDM", n: "Gold Mini" }, { t: "UMRA", n: "Wahed Dow Jones" }
+        { t: "UMRA", n: "Wahed Dow Jones" }, { t: "WDE.PA", n: "MSCI World Islam" }
       ] 
     },
     { 
       label: "Métaux & Énergie", 
       icon: "🛡️", 
       assets: [
-        { t: "SGLD.L", n: "Or Physique (iShares)" }, 
-        { t: "SSLV.L", n: "Argent Physique" }, 
+        { t: "SGLD.L", n: "Or Physique" }, 
+        { t: "PHAG.L", n: "Argent Physique" }, 
         { t: "PHPT.L", n: "Platine Physique" }, 
-        { t: "PHPD.L", n: "Palladium Physique" },
+        { t: "IGLN.L", n: "iShares Gold" },
         { t: "GBS.L", n: "Gold Bullion" },
-        { t: "PHAG.L", n: "WisdomTree Silver" },
-        { t: "IGLN.L", n: "iShares Physical Gold" },
-        { t: "SRET.SR", n: "Saudi REITS" }
+        { t: "SSLV.L", n: "Silver ETC" },
+        { t: "VALE", n: "Vale Mining" },
+        { t: "RIO", n: "Rio Tinto" }
       ] 
     }
   ];
 
   const [activePreset, setActivePreset] = useState(PRESETS[0]);
+
+  // --- CALCUL DU SCORE (ETOILES) ---
+  const calculateScore = (res) => {
+    if (!res) return 0;
+    let score = 0;
+    
+    // 1. Conformité (Le plus important)
+    if (res.compliance?.is_halal) score += 2;
+    
+    // 2. Santé Financière
+    const debt = res.ratios?.debt_ratio || 100;
+    const cash = res.ratios?.cash_ratio || 0;
+    
+    if (debt < 30) score += 1; // Peu de dette
+    if (cash < 30) score += 0.5; // Cash raisonnable
+    
+    // 3. Performance
+    const roe = res.technicals?.roe || 0;
+    const div = res.technicals?.dividend_yield || 0;
+    
+    if (roe > 12) score += 1; // Bonne rentabilité
+    if (div > 1.5) score += 0.5; // Bon dividende
+
+    return Math.min(Math.round(score), 5); // Max 5 étoiles
+  };
 
   // --- 2. GESTION AUTOMATIQUE ---
   useEffect(() => {
@@ -100,6 +125,8 @@ export default function ScreenerModule({ autoSearch }) {
   };
 
   const handleSearch = () => fetchAnalysis(ticker);
+  
+  const score = calculateScore(result);
 
   return (
     <div className="animate-fade-in max-w-6xl mx-auto pb-20">
@@ -315,13 +342,35 @@ export default function ScreenerModule({ autoSearch }) {
                             <DollarSign size={16} /> Fondamentaux
                         </h3>
                         <div className="grid grid-cols-2 gap-4">
-                           <MetricBox label="PER (Price Earning)" value={result.technicals?.per || "N/A"} />
-                           <MetricBox label="ROE (Rentabilité)" value={result.technicals?.roe ? `${result.technicals.roe}%` : "N/A"} />
-                           <MetricBox label="Dividende" value={result.technicals?.dividend_yield ? `${result.technicals.dividend_yield}%` : "0%"} />
+                           {/* MODIFICATION ICI: Ajout des tooltips */}
+                           <MetricBox 
+                                label="PER (Price Earning)" 
+                                value={result.technicals?.per || "N/A"} 
+                                isGood={result.technicals?.per > 0 && result.technicals?.per < 25}
+                                tooltip="Price Earning Ratio : Indique si l'action est chère. Un PER bas (<20) est souvent signe de bon prix."
+                           />
+                           <MetricBox 
+                                label="ROE (Rentabilité)" 
+                                value={result.technicals?.roe ? `${result.technicals.roe}%` : "N/A"}
+                                isGood={result.technicals?.roe > 12}
+                                tooltip="Return On Equity : Rentabilité des capitaux. Plus il est élevé (>12%), mieux l'entreprise gère votre argent."
+                           />
+                           <MetricBox 
+                                label="Dividende" 
+                                value={result.technicals?.dividend_yield ? `${result.technicals.dividend_yield}%` : "0%"} 
+                                isGood={result.technicals?.dividend_yield > 1.5}
+                                tooltip="Rendement annuel reversé aux actionnaires en % du prix de l'action."
+                           />
+                           
+                           {/* Etoiles Dynamiques */}
                            <div className="p-3 bg-white dark:bg-black/20 rounded-xl border border-gray-100 dark:border-white/5 flex flex-col justify-center">
-                               <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Qualité Bilan</p>
-                               <div className="flex text-brand-gold">
-                                   {'★'.repeat(4)}{'☆'}
+                               <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Qualité Globale</p>
+                               <div className="flex text-brand-gold text-lg">
+                                   {[...Array(5)].map((_, i) => (
+                                       <span key={i} className={i < score ? "text-brand-gold" : "text-gray-300 dark:text-gray-700"}>
+                                           ★
+                                       </span>
+                                   ))}
                                </div>
                            </div>
                         </div>
@@ -366,11 +415,28 @@ function GaugeCard({ label, value, limit, isGood }) {
     );
 }
 
-function MetricBox({ label, value }) {
+// MODIFICATION ICI : Ajout du support tooltip
+function MetricBox({ label, value, isGood, tooltip }) {
+    let valueColor = "text-gray-800 dark:text-white"; 
+    if (isGood === true) valueColor = "text-emerald-500";
+    if (isGood === false) valueColor = "text-red-500";
+
     return (
         <div className="p-3 bg-white dark:bg-black/20 rounded-xl border border-gray-100 dark:border-white/5">
-            <p className="text-[10px] text-gray-400 uppercase font-bold">{label}</p>
-            <p className="text-sm font-bold text-gray-800 dark:text-white mt-1">{value}</p>
+            <div className="flex items-center gap-1.5 mb-1 group relative w-fit">
+                <p className="text-[10px] text-gray-400 uppercase font-bold">{label}</p>
+                {tooltip && (
+                    <>
+                        <Info size={10} className="text-gray-400 cursor-help hover:text-brand-gold transition-colors" />
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-40 p-2 bg-gray-900 text-white text-[10px] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50 text-center leading-tight">
+                            {tooltip}
+                            {/* Petite flèche en CSS */}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                        </div>
+                    </>
+                )}
+            </div>
+            <p className={`text-sm font-bold mt-1 ${valueColor}`}>{value}</p>
         </div>
     );
 }

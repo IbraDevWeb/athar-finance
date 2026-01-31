@@ -40,9 +40,9 @@ def analyze_ticker():
         # --- SCREENER SECTORIEL ---
         banned = ['bank', 'insurance', 'reinsurance', 'mortgage', 'lending', 'interest',
     # Vice & Plaisir
-    'casino', 'gambling', 'betting', 'lottery', 'adult entertainment', 'pornography',
+    'casino', 'gambling', 'betting', 'lottery', 'adult entertainment', 'pornography', 'music',
     # Alcool & Tabac
-    'alcohol', 'liquor', 'brewery', 'distillery', 'wine', 'tobacco', 'cigarette',
+    'alcohol', 'liquor', 'brewery', 'distillery', 'wine', 'tobacco', 'cigarette', 'cigar',
     # Alimentaire
     'pork', 'bacon', 'ham', 'swine',
     # Défense
