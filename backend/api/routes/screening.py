@@ -38,7 +38,15 @@ def analyze_ticker():
         cash_ratio = (total_cash / market_cap * 100) if market_cap > 0 else 0
         
         # --- SCREENER SECTORIEL ---
-        banned = ['bank', 'insurance', 'casino', 'gambling', 'alcohol', 'brewery', 'tobacco', 'pork', 'defense', 'weapon']
+        banned = ['bank', 'insurance', 'reinsurance', 'mortgage', 'lending', 'interest',
+    # Vice & Plaisir
+    'casino', 'gambling', 'betting', 'lottery', 'adult entertainment', 'pornography',
+    # Alcool & Tabac
+    'alcohol', 'liquor', 'brewery', 'distillery', 'wine', 'tobacco', 'cigarette',
+    # Alimentaire
+    'pork', 'bacon', 'ham', 'swine',
+    # Défense
+    'defense', 'military', 'weapon', 'armament', 'missile']
         business_text = f"{info.get('sector', '')} {info.get('industry', '')} {info.get('longBusinessSummary', '')}".lower()
         found_keywords = [w for w in banned if w in business_text]
         

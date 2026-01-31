@@ -12,7 +12,7 @@ export default function ScreenerModule({ autoSearch }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // --- 1. LISTE DES PRESETS (AVEC VRAIS NOMS) ---
+  // --- 1. LISTE DES PRESETS (MISE À JOUR : MÉTAUX AU LIEU DE CRYPTOS) ---
   const PRESETS = [
     { 
       label: "US Tech", 
@@ -44,12 +44,17 @@ export default function ScreenerModule({ autoSearch }) {
       ] 
     },
     { 
-      label: "Cryptos", 
-      icon: "🪙", 
+      label: "Métaux & Énergie", 
+      icon: "🛡️", 
       assets: [
-        { t: "BTC-USD", n: "Bitcoin" }, { t: "ETH-USD", n: "Ethereum" }, { t: "SOL-USD", n: "Solana" }, 
-        { t: "BNB-USD", n: "Binance Coin" }, { t: "ADA-USD", n: "Cardano" }, { t: "XRP-USD", n: "Ripple" },
-        { t: "AVAX-USD", n: "Avalanche" }, { t: "DOT-USD", n: "Polkadot" }
+        { t: "SGLD.L", n: "Or Physique (iShares)" }, 
+        { t: "SSLV.L", n: "Argent Physique" }, 
+        { t: "PHPT.L", n: "Platine Physique" }, 
+        { t: "PHPD.L", n: "Palladium Physique" },
+        { t: "GBS.L", n: "Gold Bullion" },
+        { t: "PHAG.L", n: "WisdomTree Silver" },
+        { t: "IGLN.L", n: "iShares Physical Gold" },
+        { t: "SRET.SR", n: "Saudi REITS" }
       ] 
     }
   ];
@@ -110,7 +115,7 @@ export default function ScreenerModule({ autoSearch }) {
         </h1>
         <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
           Analysez la conformité charia de 5000+ actifs. 
-          <span className="hidden md:inline"> Actions, ETFs, Cryptos et Matières Premières.</span>
+          <span className="hidden md:inline"> Actions, ETFs et Matières Premières Physiques.</span>
         </p>
       </div>
 
@@ -126,7 +131,7 @@ export default function ScreenerModule({ autoSearch }) {
                       value={ticker}
                       onChange={(e) => setTicker(e.target.value.toUpperCase())}
                       onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                      placeholder="Rechercher (ex: LVMH, AAPL, BTC...)"
+                      placeholder="Rechercher (ex: LVMH, AAPL, SGLD...)"
                       className="block w-full pl-12 pr-10 py-4 border-2 border-transparent bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-400 rounded-2xl focus:outline-none focus:bg-white dark:focus:bg-[#0a0a0a] focus:border-brand-gold transition-all font-bold text-lg"
                   />
                   {ticker && (
@@ -159,9 +164,8 @@ export default function ScreenerModule({ autoSearch }) {
           </div>
       </div>
 
-      {/* --- PRESETS (GRILLE AMÉLIORÉE) --- */}
+      {/* --- PRESETS --- */}
       <div className="mb-16">
-          {/* Onglets */}
           <div className="flex flex-wrap justify-center gap-3 mb-8 px-4">
             {PRESETS.map((preset) => (
               <button
@@ -179,7 +183,6 @@ export default function ScreenerModule({ autoSearch }) {
             ))}
           </div>
 
-          {/* Grille Cartes */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 px-4 max-w-6xl mx-auto">
               {activePreset.assets.map((asset) => (
                   <button
@@ -243,31 +246,23 @@ export default function ScreenerModule({ autoSearch }) {
 
             {/* CONTENU ANALYSE */}
             <div className="p-6 md:p-10">
-                
-                {/* --- 1. ANALYSE FINANCIÈRE (3 BLOCS) --- */}
                 <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
                     <BarChart3 size={16} /> Analyse Financière (AAOIFI)
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    
-                    {/* Jauge 1 : DETTE */}
                     <GaugeCard 
                         label="Dette / Market Cap"
                         value={result.ratios?.debt_ratio}
                         limit={33}
                         isGood={result.ratios?.debt_ratio < 33}
                     />
-
-                    {/* Jauge 2 : CASH */}
                     <GaugeCard 
                         label="Cash / Market Cap"
                         value={result.ratios?.cash_ratio}
                         limit={33}
                         isGood={result.ratios?.cash_ratio < 33}
                     />
-
-                    {/* Bloc 3 : REVENUS IMPURS (MANUEL) */}
                     <div className="p-5 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-500/30 relative overflow-hidden flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-2">
                             <span className="text-[10px] font-bold uppercase text-amber-700 dark:text-amber-500">
@@ -275,7 +270,6 @@ export default function ScreenerModule({ autoSearch }) {
                             </span>
                             <Info size={16} className="text-amber-500" />
                         </div>
-                        
                         <div>
                             <p className="text-xs text-amber-800 dark:text-amber-400 font-medium leading-relaxed mb-3">
                                 ⚠️ Donnée non disponible automatiquement. Vérifiez le rapport annuel.
@@ -288,10 +282,7 @@ export default function ScreenerModule({ autoSearch }) {
                     </div>
                 </div>
 
-                {/* --- 2. ACTIVITÉ & FONDAMENTAUX --- */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    
-                    {/* Colonne Gauche : Activité */}
                     <div className="bg-gray-50 dark:bg-white/5 p-6 rounded-2xl border border-gray-100 dark:border-white/5">
                         <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
                             <Activity size={16} /> Activité Commerciale
@@ -319,7 +310,6 @@ export default function ScreenerModule({ autoSearch }) {
                         </div>
                     </div>
 
-                    {/* Colonne Droite : Fondamentaux */}
                     <div className="bg-gray-50 dark:bg-white/5 p-6 rounded-2xl border border-gray-100 dark:border-white/5">
                         <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
                             <DollarSign size={16} /> Fondamentaux
@@ -336,10 +326,8 @@ export default function ScreenerModule({ autoSearch }) {
                            </div>
                         </div>
                     </div>
-
                 </div>
 
-                {/* DISCLAIMER */}
                 <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/10 text-center">
                     <p className="text-xs text-gray-400 italic">
                         Les données sont fournies à titre indicatif. L'investisseur est responsable de sa purification finale.
@@ -356,7 +344,6 @@ export default function ScreenerModule({ autoSearch }) {
 
 function GaugeCard({ label, value, limit, isGood }) {
     const percent = Math.min((value / (limit * 1.5)) * 100, 100); 
-    
     return (
         <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/5 relative overflow-hidden group flex flex-col justify-between h-full">
             <div className="flex justify-between items-end mb-3 relative z-10">
@@ -365,15 +352,12 @@ function GaugeCard({ label, value, limit, isGood }) {
                     {value}%
                 </span>
             </div>
-            
-            {/* Barre de fond */}
             <div className="h-2 w-full bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden relative z-10 mb-2">
                 <div 
                     className={`h-full rounded-full transition-all duration-1000 ${isGood ? 'bg-emerald-500' : 'bg-red-500'}`}
                     style={{ width: `${percent}%` }}
                 ></div>
             </div>
-            
             <div className="flex justify-between text-[9px] text-gray-400 relative z-10">
                 <span>0%</span>
                 <span className="font-bold text-brand-gold">Max: {limit}%</span>
