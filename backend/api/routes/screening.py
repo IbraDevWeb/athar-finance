@@ -1,10 +1,29 @@
 from flask import Blueprint, request, jsonify
 import yfinance as yf
+import math
 
 screening_bp = Blueprint('screening', __name__)
 
+# --- FONCTION ANTI-CRASH (Le Secret) ---
+def clean_nan(value):
+    """Remplace les NaN et Infinite par 0 ou None pour éviter l'erreur 500"""
+    if isinstance(value, float):
+        if math.isnan(value) or math.isinf(value):
+            return 0
+    return value
+
+def sanitize_result(data):
+    """Nettoie tout le dictionnaire avant l'envoi"""
+    if isinstance(data, dict):
+        return {k: sanitize_result(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [sanitize_result(v) for v in data]
+    else:
+        return clean_nan(data)
+
+# --- ANALYSE ---
 def analyze_stock(ticker):
-    # Initialisation des variables par défaut (pour éviter les crashs)
+    # Modèle vide par défaut
     data = {
         "ticker": ticker,
         "name": ticker,
@@ -18,141 +37,117 @@ def analyze_stock(ticker):
 
     try:
         stock = yf.Ticker(ticker)
-        
-        # --- 1. RÉCUPÉRATION ROBUSTE (INFO) ---
-        # On ne compte QUE sur .info pour la stabilité (fast_info fait planter Danone parfois)
         info = stock.info
         
-        # Si Yahoo ne renvoie rien (cas Danone buggé), on arrête là proprement
+        # Si Yahoo ne répond rien (fréquent sur Euronext), on renvoie le modèle vide mais propre
         if not info:
-            print(f"⚠️ Pas d'info Yahoo pour {ticker}")
-            return None
+            print(f"⚠️ Info vide pour {ticker}")
+            return data 
 
-        # --- 2. DONNÉES DE BASE ---
+        # 1. INFO DE BASE
         data["name"] = info.get('longName', info.get('shortName', ticker))
         data["sector"] = info.get('sector', 'Inconnu')
         data["industry"] = info.get('industry', 'Inconnu')
         
-        # Prix : on cherche partout
+        # Prix (gestion de tous les cas possibles)
         price = info.get('currentPrice') or info.get('regularMarketPreviousClose') or info.get('previousClose') or 0
         data["price"] = price
         data["technicals"]["current_price"] = price
 
-        # --- 3. CORRECTION DIVIDENDES (THALÈS) ---
-        # Yahoo renvoie parfois 0.03 (3%) ou 3.0 (3%). C'est le chaos.
+        # 2. DIVIDENDES (Logique blindée)
         raw_div = info.get('dividendYield', 0)
-        
-        if raw_div is None:
+        if raw_div is None: 
             final_div = 0
-        elif raw_div > 1:
-            # Si > 1 (ex: 3.5), c'est déjà un pourcentage -> on garde 3.5
-            # Sauf si c'est GÉANT (ex: 500 pour 5%), alors on divise
-            if raw_div > 50: 
-                final_div = raw_div / 100
-            else:
-                final_div = raw_div
-        else:
-            # Si <= 1 (ex: 0.03), c'est un ratio -> on multiplie par 100
+        elif raw_div > 100: # Ex: 500 pour 5% -> on divise
+            final_div = raw_div / 100
+        elif raw_div > 1: # Ex: 3.5 pour 3.5% -> on garde
+            final_div = raw_div
+        else: # Ex: 0.03 pour 3% -> on multiplie
             final_div = raw_div * 100
-            
         data["technicals"]["dividend_yield"] = round(final_div, 2)
 
-        # --- 4. RATIOS TECHNIQUES (PER / ROE) ---
+        # 3. PER & ROE
         per = info.get('trailingPE') or info.get('forwardPE')
-        data["technicals"]["per"] = round(per, 2) if per else "N/A"
+        data["technicals"]["per"] = round(per, 2) if (per and not math.isnan(per)) else "N/A"
 
         roe = info.get('returnOnEquity')
-        data["technicals"]["roe"] = round(roe * 100, 2) if roe else "N/A"
+        data["technicals"]["roe"] = round(roe * 100, 2) if (roe and not math.isnan(roe)) else "N/A"
 
-        # --- 5. ANALYSE BILAN (DETTE & CASH) ---
-        # On utilise des valeurs par défaut sûres si le bilan manque
-        market_cap = info.get('marketCap', 1) # Eviter division par zero
-        if market_cap is None or market_cap == 0: market_cap = 1
-
-        balance = stock.balance_sheet
+        # 4. BILAN (Dette & Cash)
+        mkt_cap = info.get('marketCap', 1) or 1
         
+        balance = stock.balance_sheet
         total_debt = 0
         cash = 0
 
         if not balance.empty:
-            # Dette
-            if 'Total Debt' in balance.index:
-                total_debt = balance.loc['Total Debt'].iloc[0]
-            
-            # Cash
-            if 'Cash And Cash Equivalents' in balance.index:
-                cash = balance.loc['Cash And Cash Equivalents'].iloc[0]
-            elif 'Cash Financial' in balance.index:
-                cash = balance.loc['Cash Financial'].iloc[0]
+            # On utilise .get() sur les séries pour éviter les crashs si la ligne manque
+            try:
+                if 'Total Debt' in balance.index:
+                    val = balance.loc['Total Debt'].iloc[0]
+                    total_debt = val if not math.isnan(val) else 0
+                
+                if 'Cash And Cash Equivalents' in balance.index:
+                    val = balance.loc['Cash And Cash Equivalents'].iloc[0]
+                    cash = val if not math.isnan(val) else 0
+                elif 'Cash Financial' in balance.index:
+                    val = balance.loc['Cash Financial'].iloc[0]
+                    cash = val if not math.isnan(val) else 0
+            except Exception as e:
+                print(f"Erreur lecture bilan {ticker}: {e}")
 
-        # Calculs Ratios
-        debt_ratio = (total_debt / market_cap) * 100
-        cash_ratio = (cash / market_cap) * 100
+        # Calcul sécurisé
+        debt_ratio = (total_debt / mkt_cap) * 100
+        cash_ratio = (cash / mkt_cap) * 100
 
         data["ratios"]["debt_ratio"] = round(debt_ratio, 2)
         data["ratios"]["cash_ratio"] = round(cash_ratio, 2)
 
-        # --- 6. FILTRE ISLAMIQUE (SECTEUR & MOTS CLÉS) ---
-        # On simplifie : liste noire stricte
+        # 5. VERDICT ISLAMIQUE
         summary = (info.get('longBusinessSummary') or info.get('description') or "").lower()
-        business_violation = False
-        found_keywords = []
-
-        # Exceptions (Banques Islamiques)
-        is_islamic = 'islamic' in data["name"].lower() or 'rajhi' in data["name"].lower()
-
-        # Liste Interdite
-        forbidden_terms = [
-            'alcohol', 'wine', 'spirit', 'champagne', 'brewery', # Alcool
-            'pork', 'porcine', # Porc
-            'casino', 'gambling', 'betting', # Jeux
-            'tobacco', 'cigarette', # Tabac
-            'defense systems', 'weapon', 'defense' # Armement
-            'adult entertainment' # Pornographie
-        ]
         
-        # Finance (Sauf si islamique)
-        if not is_islamic:
-            forbidden_terms.extend(['interest income', 'insurance underwriting', 'lending'])
-            # Si le secteur est explicitement banque/assurance
-            if 'Bank' in data["industry"] or 'Insurance' in data["industry"]:
-                 # Petite tolérance pour Aramco (Energy) qui n'est pas une banque
-                 if data["sector"] not in ['Energy', 'Basic Materials', 'Technology']: 
-                    business_violation = True
-                    found_keywords.append(f"Secteur: {data['industry']}")
+        # Liste noire
+        forbidden = ['alcohol', 'wine', 'spirit', 'champagne', 'brewery', 'pork', 'casino', 'gambling', 'tobacco', 'defense systems', 'weapon', 'adult entertainment']
+        finance_keywords = ['interest income', 'insurance underwriting', 'lending']
+        
+        is_islamic = 'islamic' in data["name"].lower() or 'rajhi' in data["name"].lower()
+        business_violation = False
+        found = []
 
-        # Scan du résumé
-        for word in forbidden_terms:
+        # Scan universel
+        for word in forbidden:
             if word in summary:
-                # Protection LVMH : Si le mot est trouvé, c'est haram
+                found.append(word)
                 business_violation = True
-                found_keywords.append(word)
+        
+        # Scan finance (si pas islamique et pas "Energy" comme Aramco/Total)
+        if not is_islamic and data["sector"] not in ['Energy', 'Basic Materials', 'Utilities']:
+            if 'Bank' in data["industry"] or 'Insurance' in data["industry"]:
+                found.append(f"Secteur: {data['industry']}")
+                business_violation = True
+            for word in finance_keywords:
+                if word in summary:
+                    found.append(word)
+                    business_violation = True
 
         data["compliance"]["business_check"]["failed"] = business_violation
-        data["compliance"]["business_check"]["found_keywords"] = list(set(found_keywords))
-        
-        # Verdict Final
+        data["compliance"]["business_check"]["found_keywords"] = list(set(found))
         data["compliance"]["is_halal"] = (debt_ratio < 33) and (cash_ratio < 33) and (not business_violation)
 
-        return data
+        # PASSAGE FINAL DU NETTOYEUR (Crucial pour éviter l'erreur 500)
+        return sanitize_result(data)
 
     except Exception as e:
-        print(f"❌ Erreur sur {ticker}: {e}")
-        # En cas d'erreur, on renvoie quand même les données partielles si on les a, sinon None
+        print(f"❌ CRASH TOTAL sur {ticker}: {e}")
         return None
 
 @screening_bp.route('/analyze', methods=['POST'])
 def analyze():
-    req_data = request.get_json()
-    tickers_input = req_data.get('tickers', '')
+    req = request.get_json()
+    tickers = [t.strip().upper() for t in req.get('tickers', '').split(',') if t.strip()]
     
-    if not tickers_input:
-        return jsonify({"error": "No ticker provided"}), 400
-        
-    tickers_list = [t.strip().upper() for t in tickers_input.split(',')]
     results = []
-    
-    for t in tickers_list:
+    for t in tickers:
         res = analyze_stock(t)
         if res:
             results.append(res)
