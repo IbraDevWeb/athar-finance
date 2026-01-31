@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Search, ArrowRight, X, TrendingUp, AlertTriangle, 
   CheckCircle, Activity, DollarSign, BarChart3, ShieldCheck, FileText, Info 
-} from 'lucide-center';
+} from 'lucide-react';
 
 const API_URL = 'https://athar-api.onrender.com/api';
 
@@ -12,6 +12,7 @@ export default function ScreenerModule({ autoSearch }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Remplacez cette liste par votre liste complète si nécessaire
   const PRESETS = [
     { 
       label: "US Tech", 
@@ -82,14 +83,21 @@ export default function ScreenerModule({ autoSearch }) {
     }
   };
 
-  // --- LOGIQUE DE NOTATION DYNAMIQUE ---
+  // --- NOUVELLE FONCTIONNALITÉ 1 : NOTATION DYNAMIQUE ---
   const renderStars = (res) => {
     let score = 0;
+    // 3 étoiles de base si Halal
     if (res.compliance?.is_halal) score += 3;
+    // +1 si très rentable (ROE > 15%)
     if (parseFloat(res.technicals?.roe) > 15) score += 1;
+    // +1 si verse un dividende
     if (parseFloat(res.technicals?.dividend_yield) > 0) score += 1;
+    
+    // Plafond à 5 étoiles
+    if (score > 5) score = 5;
+
     return (
-      <div className="flex text-brand-gold" title="Note basée sur la conformité et la performance">
+      <div className="flex text-brand-gold" title={`Note Qualité : ${score}/5`}>
         {'★'.repeat(score)}{'☆'.repeat(5 - score)}
       </div>
     );
@@ -97,7 +105,7 @@ export default function ScreenerModule({ autoSearch }) {
 
   return (
     <div className="animate-fade-in max-w-6xl mx-auto pb-20">
-      {/* HEADER & SEARCH (Identique à ton design) */}
+      {/* HEADER & SEARCH */}
       <div className="text-center mb-10 space-y-4 pt-4">
         <h1 className="text-3xl md:text-5xl font-display font-bold text-gray-900 dark:text-white">
           Screener Pro <span className="text-brand-gold">&</span> Multi-Actifs
@@ -151,20 +159,20 @@ export default function ScreenerModule({ autoSearch }) {
                         </div>
                     </div>
 
-                    {/* FONDAMENTAUX COLORÉS & ÉTOILES */}
+                    {/* FONDAMENTAUX avec INFO-BULLES et COULEURS */}
                     <div className="bg-gray-50 dark:bg-white/5 p-6 rounded-2xl">
                         <h3 className="text-sm font-bold text-gray-500 mb-4 uppercase">Fondamentaux</h3>
                         <div className="grid grid-cols-2 gap-4">
                            <MetricBox 
                               label="PER" 
                               value={result.technicals?.per} 
-                              tooltip="Price Earning Ratio : Valorisation de l'action. Si négatif = l'entreprise perd de l'argent."
+                              tooltip="Price Earning Ratio : Si négatif (rouge), l'entreprise perd de l'argent."
                            />
                            <MetricBox 
                               label="ROE" 
                               value={result.technicals?.roe} 
                               suffix="%" 
-                              tooltip="Return on Equity : Rentabilité de l'argent des actionnaires. Cible > 15%."
+                              tooltip="Rentabilité des capitaux propres. Une valeur négative (rouge) indique un déficit."
                            />
                            <MetricBox 
                               label="Dividende" 
@@ -174,6 +182,7 @@ export default function ScreenerModule({ autoSearch }) {
                            />
                            <div className="p-3 bg-white dark:bg-black/20 rounded-xl border border-gray-100 dark:border-white/5">
                                <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Score Global</p>
+                               {/* Appel de la fonction étoiles dynamiques */}
                                {renderStars(result)}
                            </div>
                         </div>
@@ -201,13 +210,22 @@ function GaugeCard({ label, value, limit, isGood }) {
     );
 }
 
+// --- NOUVELLE FONCTIONNALITÉ 2 & 3 : COULEURS ET INFO-BULLES ---
 function MetricBox({ label, value, suffix = "", tooltip }) {
     const numValue = parseFloat(value);
-    const isNegative = numValue < 0;
-    const colorClass = isNegative ? 'text-red-500' : numValue > 0 ? 'text-emerald-500' : 'text-gray-800 dark:text-white';
+    
+    // Logique de couleur : Rouge si négatif, Vert si positif, par défaut sinon
+    let colorClass = 'text-gray-800 dark:text-white';
+    if (!isNaN(numValue)) {
+        if (numValue < 0) colorClass = 'text-red-500';
+        else if (numValue > 0) colorClass = 'text-emerald-500';
+    }
 
     return (
-        <div className="p-3 bg-white dark:bg-black/20 rounded-xl border border-gray-100 dark:border-white/5 group relative cursor-help" title={tooltip}>
+        <div 
+            className="p-3 bg-white dark:bg-black/20 rounded-xl border border-gray-100 dark:border-white/5 group relative cursor-help transition-all hover:border-brand-gold/30" 
+            title={tooltip} // L'attribut title crée l'info-bulle native
+        >
             <p className="text-[10px] text-gray-400 uppercase font-bold">{label}</p>
             <p className={`text-sm font-bold mt-1 ${colorClass}`}>
                 {value}{suffix}
