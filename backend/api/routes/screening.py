@@ -1,14 +1,8 @@
 from flask import Blueprint, request, jsonify
 import yfinance as yf
 import pandas as pd
-import requests_cache                # <--- NOUVEAU
-from datetime import timedelta       # <--- NOUVEAU
 
 screening_bp = Blueprint('screening', __name__)
-
-# --- CONFIGURATION DU CACHE ---
-# Crée un fichier 'yfinance_cache.sqlite' et garde les données 24 heures
-session = requests_cache.CachedSession('yfinance_cache', expire_after=timedelta(days=1))
 
 def sanitize_value(val, default=0, is_percent=False):
     """Nettoie et arrondit les valeurs financières."""
@@ -32,8 +26,7 @@ def analyze_ticker():
         return jsonify({"error": "Ticker manquant"}), 400
 
     try:
-        # --- MODIFICATION ICI : On injecte la session de cache ---
-        stock = yf.Ticker(ticker_input, session=session)
+        stock = yf.Ticker(ticker_input)
         info = stock.info
         
         # --- CALCULS AAOIFI ---
