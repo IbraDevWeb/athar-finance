@@ -11,6 +11,8 @@ import Portfolio from "./modules/PortfolioModule";
 import Academy from "./modules/AcademyModule";
 import Watchlist from "./modules/WatchlistModule"; 
 import Comparator from "./modules/ComparatorModule";
+// [NOUVEAU] Import du module News
+import NewsModule from "./modules/NewsModule";
 
 function App() {
   // États de navigation
@@ -134,7 +136,27 @@ function App() {
           {/* Affichage des Modules */}
           <div className="animate-fade-in">
             {currentPage === 'home' && <Home onNavigate={handleNavigate} />}
-            {currentPage === 'screener' && <Screener autoSearch={screenerTicker} />} 
+            
+            {/* [MODIFICATION ICI] On a groupé le Screener et les News */}
+            {currentPage === 'screener' && (
+                <div className="space-y-12">
+                    {/* Le Screener Normal */}
+                    <Screener autoSearch={screenerTicker} />
+                    
+                    {/* Séparateur Visuel */}
+                    <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-white/10 to-transparent opacity-50"></div>
+                    
+                    {/* Le Nouveau Module News en dessous */}
+                    <section>
+                        <div className="text-center mb-8">
+                            <h3 className="text-xl font-bold opacity-80 dark:text-white">Contexte de Marché</h3>
+                            <p className="text-sm opacity-50 dark:text-gray-400">Comprendre pourquoi ça bouge</p>
+                        </div>
+                        <NewsModule />
+                    </section>
+                </div>
+            )}
+            
             {currentPage === 'comparator' && <Comparator />}
             {currentPage === 'simulator' && <Simulator />}
             {currentPage === 'zakat' && <Zakat />}
