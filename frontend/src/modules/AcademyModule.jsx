@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 // On importe tes données depuis le fichier AcademyData.jsx (vérifie bien le chemin)
-import { courses, glossary, quizData } from '../components/AcademyData'; 
+// Si AcademyData est dans le même dossier (src/modules/) :
+import { courses, glossary, quizData } from './AcademyData'; 
 import { 
   GraduationCap, Hourglass, Globe, Search, FileText, 
   BookOpen, ChevronRight, CheckCircle, XCircle, Trophy,
