@@ -1,26 +1,21 @@
 from flask import Blueprint, request, jsonify
 import yfinance as yf
 import pandas as pd
-import requests_cache
-from datetime import timedelta
+# On a retiré les imports de cache
 
 screening_bp = Blueprint('screening', __name__)
 
-# --- CONFIGURATION DU CACHE (CORRIGÉ POUR RENDER) ---
-# On utilise backend='memory' pour stocker le cache en RAM.
-# Cela évite l'erreur 500 car Render interdit souvent l'écriture de fichiers (.sqlite)
-session = requests_cache.CachedSession('yfinance_cache', backend='memory', expire_after=timedelta(days=1))
+# Plus de configuration de session ici.
 
 def sanitize_value(val, default=0, is_percent=False):
     """Nettoie et arrondit les valeurs financières."""
     if pd.isna(val) or val is None:
         return default
     
-    # Si c'est un pourcentage (ex: 0.035 -> 3.5)
     if is_percent and isinstance(val, (int, float)):
-        if -1 <= val <= 1: # Probablement un ratio décimal
+        if -1 <= val <= 1: 
             return round(val * 100, 2)
-        return round(val, 2) # Déjà en format 1-100
+        return round(val, 2)
         
     return round(val, 2) if isinstance(val, (int, float)) else val
 
@@ -34,8 +29,8 @@ def analyze_ticker():
         return jsonify({"error": "Ticker manquant"}), 400
 
     try:
-        # On passe la session de cache ici
-        stock = yf.Ticker(ticker_input, session=session)
+        # RETRAIT DU CACHE ICI : On appelle yf.Ticker directement
+        stock = yf.Ticker(ticker_input)
         info = stock.info
         
         # --- CALCULS AAOIFI ---
@@ -58,7 +53,6 @@ def analyze_ticker():
         business_text = f"{info.get('sector', '')} {info.get('industry', '')} {info.get('longBusinessSummary', '')}".lower()
         found_keywords = [w for w in banned if w in business_text]
         
-        # Verdict
         is_halal = len(found_keywords) == 0 and debt_ratio < 33 and cash_ratio < 33
 
         result = {
@@ -102,11 +96,11 @@ def scan_etf():
         return jsonify({"error": "Ticker manquant"}), 400
 
     try:
-        # On passe la session de cache ici aussi
-        etf = yf.Ticker(ticker_input, session=session)
+        # RETRAIT DU CACHE ICI AUSSI
+        etf = yf.Ticker(ticker_input)
         info = etf.info
         
-        # 1. Récupération des Holdings (Composition)
+        # 1. Holdings
         try:
             holdings_df = etf.holdings
             if holdings_df is not None and not holdings_df.empty:
@@ -128,7 +122,7 @@ def scan_etf():
         except:
             top_holdings = []
 
-        # 2. Répartition Sectorielle
+        # 2. Secteurs
         sectors = []
         raw_sectors = info.get('sectorWeightings', [])
         if raw_sectors:
@@ -136,7 +130,6 @@ def scan_etf():
                 for k, v in s.items():
                     sectors.append({"name": k, "value": round(v * 100, 2)})
         
-        # Fallback
         if not sectors and info.get('category'):
             sectors = [{"name": info.get('category'), "value": 100}]
 
