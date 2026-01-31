@@ -1,24 +1,29 @@
 from flask import Blueprint, request, jsonify
 import yfinance as yf
 import pandas as pd
+import requests_cache
+from datetime import timedelta
 
 screening_bp = Blueprint('screening', __name__)
+
+# --- CONFIGURATION DU CACHE (Déjà en place) ---
+session = requests_cache.CachedSession('yfinance_cache', expire_after=timedelta(days=1))
 
 def sanitize_value(val, default=0, is_percent=False):
     """Nettoie et arrondit les valeurs financières."""
     if pd.isna(val) or val is None:
         return default
-    
-    # Si c'est un pourcentage (ex: 0.035 -> 3.5)
     if is_percent and isinstance(val, (int, float)):
-        if -1 <= val <= 1: # Probablement un ratio décimal
+        if -1 <= val <= 1: 
             return round(val * 100, 2)
-        return round(val, 2) # Déjà en format 1-100
-        
+        return round(val, 2)
     return round(val, 2) if isinstance(val, (int, float)) else val
 
+# --- ROUTE 1 : ANALYSE ACTION (EXISTANTE) ---
 @screening_bp.route('/analyze', methods=['POST'])
 def analyze_ticker():
+    # ... (Garde ton code existant ici pour /analyze) ...
+    # Je le réécris pour être sûr que tu as le fichier complet propre
     data = request.json
     ticker_input = data.get('tickers', '').upper()
     
@@ -26,10 +31,9 @@ def analyze_ticker():
         return jsonify({"error": "Ticker manquant"}), 400
 
     try:
-        stock = yf.Ticker(ticker_input)
+        stock = yf.Ticker(ticker_input, session=session)
         info = stock.info
         
-        # --- CALCULS AAOIFI ---
         market_cap = info.get('marketCap', 0)
         total_debt = info.get('totalDebt', 0)
         total_cash = info.get('totalCash', 0)
@@ -37,20 +41,15 @@ def analyze_ticker():
         debt_ratio = (total_debt / market_cap * 100) if market_cap > 0 else 0
         cash_ratio = (total_cash / market_cap * 100) if market_cap > 0 else 0
         
-        # --- SCREENER SECTORIEL ---
         banned = ['bank', 'insurance', 'reinsurance', 'mortgage', 'lending', 'interest',
-    # Vice & Plaisir
-    'casino', 'gambling', 'betting', 'lottery', 'adult entertainment', 'pornography', 'music',
-    # Alcool & Tabac
-    'alcohol', 'liquor', 'brewery', 'distillery', 'wine', 'tobacco', 'cigarette', 'cigar',
-    # Alimentaire
-    'pork', 'bacon', 'ham', 'swine',
-    # Défense
-    'defense', 'military', 'weapon', 'armament', 'missile']
+        'casino', 'gambling', 'betting', 'lottery', 'adult entertainment', 'pornography', 'music',
+        'alcohol', 'liquor', 'brewery', 'distillery', 'wine', 'tobacco', 'cigarette', 'cigar',
+        'pork', 'bacon', 'ham', 'swine',
+        'defense', 'military', 'weapon', 'armament', 'missile']
+        
         business_text = f"{info.get('sector', '')} {info.get('industry', '')} {info.get('longBusinessSummary', '')}".lower()
         found_keywords = [w for w in banned if w in business_text]
         
-        # Verdict
         is_halal = len(found_keywords) == 0 and debt_ratio < 33 and cash_ratio < 33
 
         result = {
@@ -71,14 +70,86 @@ def analyze_ticker():
                 }
             },
             "technicals": {
-                # Ici on utilise sanitize_value pour arrondir proprement
                 "per": sanitize_value(info.get('trailingPE'), "N/A"),
                 "roe": sanitize_value(info.get('returnOnEquity'), "N/A", is_percent=True),
                 "dividend_yield": sanitize_value(info.get('dividendYield'), 0, is_percent=True)
             }
         }
-
         return jsonify({"results": [result]})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# --- ROUTE 2 : ETF X-RAY (NOUVELLE) ---
+@screening_bp.route('/etf-scan', methods=['POST'])
+def scan_etf():
+    data = request.json
+    ticker_input = data.get('ticker', '').upper()
+    
+    if not ticker_input:
+        return jsonify({"error": "Ticker manquant"}), 400
+
+    try:
+        etf = yf.Ticker(ticker_input, session=session)
+        info = etf.info
+        
+        # 1. Récupération des Holdings (Composition)
+        # Note: yfinance ne renvoie pas toujours les holdings pour tous les ETF.
+        # On essaie via la propriété .holdings (pandas DataFrame)
+        try:
+            holdings_df = etf.holdings
+            # On prend les 10 premières lignes et on convertit en dictionnaire
+            if holdings_df is not None and not holdings_df.empty:
+                # holdings_df a souvent l'index comme nom ou symbole
+                top_holdings = []
+                # On itère sur les 10 premiers
+                for index, row in holdings_df.head(10).iterrows():
+                    # La structure dépend de la version de yfinance, on s'adapte
+                    name = index if isinstance(index, str) else "Inconnu"
+                    # Parfois le nom est dans une colonne 'Name' ou 'Holding Name'
+                    if 'Name' in holdings_df.columns:
+                        name = row['Name']
+                    
+                    percent = row.get('% Assets', row.get('Weight', 0))
+                    # Si c'est 0.05, on veut 5.0
+                    if percent < 1: percent = percent * 100
+                    
+                    top_holdings.append({
+                        "name": str(name),
+                        "percent": round(float(percent), 2)
+                    })
+            else:
+                top_holdings = []
+        except:
+            top_holdings = []
+
+        # 2. Répartition Sectorielle (Si dispo)
+        # Souvent dans info['sectorWeightings'] (liste de dicts)
+        sectors = []
+        raw_sectors = info.get('sectorWeightings', [])
+        if raw_sectors:
+            for s in raw_sectors:
+                # yfinance renvoie souvent { 'realestate': 0.05, ... }
+                # ou une liste de dictionnaires
+                for k, v in s.items():
+                    sectors.append({"name": k, "value": round(v * 100, 2)})
+        
+        # Fallback: si vide, on regarde si 'sector' est simple
+        if not sectors and info.get('category'):
+            sectors = [{"name": info.get('category'), "value": 100}]
+
+        result = {
+            "ticker": ticker_input,
+            "name": info.get('longName', ticker_input),
+            "description": info.get('longBusinessSummary', "Pas de description disponible."),
+            "holdings": top_holdings,
+            "sectors": sectors,
+            "top_region": "Global" # Simplification
+        }
+
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Erreur ETF: {e}")
+        return jsonify({"error": "Impossible d'analyser cet ETF ou données indisponibles."}), 500

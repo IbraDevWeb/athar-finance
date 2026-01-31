@@ -1,8 +1,8 @@
 import React from 'react';
-// [NOUVEAU] Ajout de l'icône Home pour l'immobilier
+// [NOUVEAU] Ajout de l'icône Layers pour l'ETF
 import { 
   LayoutDashboard, Search, Wallet, BookOpen, 
-  Scale, TrendingUp, Heart, Calculator, User, Home 
+  Scale, TrendingUp, Heart, Calculator, User, Home, Layers 
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onNavigate, isMobile, closeMobileMenu }) {
@@ -60,12 +60,13 @@ export default function Sidebar({ activeTab, onNavigate, isMobile, closeMobileMe
 
         <MenuSection label="Marchés" />
         <NavItem id="screener" icon={Search} label="Screener Pro" />
+        {/* [NOUVEAU] Bouton ETF X-Ray */}
+        <NavItem id="etf" icon={Layers} label="ETF X-Ray" />
         <NavItem id="comparator" icon={Scale} label="Comparateur Actions" />
 
         <MenuSection label="Patrimoine" />
         <NavItem id="portfolio" icon={Wallet} label="Mon Portefeuille" />
         <NavItem id="simulator" icon={TrendingUp} label="Projections" />
-        {/* [NOUVEAU] Bouton Acheter vs Louer */}
         <NavItem id="house" icon={Home} label="Acheter vs Louer" />
         <NavItem id="zakat" icon={Calculator} label="Zakat & Purif." />
 

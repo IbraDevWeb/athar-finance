@@ -12,8 +12,9 @@ import Academy from "./modules/AcademyModule";
 import Watchlist from "./modules/WatchlistModule"; 
 import Comparator from "./modules/ComparatorModule";
 import NewsModule from "./modules/NewsModule";
-// [NOUVEAU] Import du module Immobilier
 import House from "./modules/HouseModule";
+// [NOUVEAU] Import du module ETF
+import EtfXray from "./modules/EtfXrayModule";
 
 function App() {
   // États de navigation
@@ -120,8 +121,9 @@ function App() {
                   {currentPage === 'zakat' && 'Purification'}
                   {currentPage === 'portfolio' && 'Portefeuille'}
                   {currentPage === 'academy' && 'Académie'}
-                  {/* [NOUVEAU] Titre Immobilier */}
                   {currentPage === 'house' && 'Immobilier vs Bourse'}
+                  {/* [NOUVEAU] Titre ETF */}
+                  {currentPage === 'etf' && 'Scanner ETF'}
                 </h2>
                 <p className="text-gray-500 dark:text-gray-400 text-sm font-light pl-5">
                     Gérez vos actifs avec précision et éthique.
@@ -153,14 +155,15 @@ function App() {
             {currentPage === 'portfolio' && <Portfolio />}
             {currentPage === 'academy' && <Academy />}
             {currentPage === 'watchlist' && <Watchlist onAnalyze={handleWatchlistAnalyze} />}
-            
-            {/* [NOUVEAU] Affichage du module House */}
             {currentPage === 'house' && <House />}
+            
+            {/* [NOUVEAU] Affichage du module ETF */}
+            {currentPage === 'etf' && <EtfXray />}
           </div>
 
           <footer className="mt-20 py-8 text-center border-t border-gray-200 dark:border-white/5">
              <p className="text-gray-400 text-[10px] uppercase tracking-widest hover:text-brand-gold transition-colors">
-               Athar Private Finance • v2.3
+               Athar Private Finance • v2.4
              </p>
           </footer>
         </div>
