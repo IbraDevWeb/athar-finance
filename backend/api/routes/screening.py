@@ -1,155 +1,92 @@
 from flask import Blueprint, request, jsonify
-import yfinance as yf
-import math
+import yfinance as ticker_data
+import pandas as pd
 
 screening_bp = Blueprint('screening', __name__)
 
-# --- FONCTION ANTI-CRASH (Le Secret) ---
-def clean_nan(value):
-    """Remplace les NaN et Infinite par 0 ou None pour éviter l'erreur 500"""
-    if isinstance(value, float):
-        if math.isnan(value) or math.isinf(value):
-            return 0
-    return value
+# --- CONFIGURATION DES RÈGLES ---
+MAX_DEBT_RATIO = 33.0  # (Dette Totale / Capitalisation) < 33%
+MAX_CASH_RATIO = 33.0  # (Cash + Intérêts / Capitalisation) < 33%
+BANNED_KEYWORDS = [
+    'bank', 'insurance', 'casino', 'gambling', 'alcohol', 'brewery', 
+    'tobacco', 'pork', 'defense', 'weapon', 'entertainment', 'cinema'
+]
 
-def sanitize_result(data):
-    """Nettoie tout le dictionnaire avant l'envoi"""
-    if isinstance(data, dict):
-        return {k: sanitize_result(v) for k, v in data.items()}
-    elif isinstance(data, list):
-        return [sanitize_result(v) for v in data]
-    else:
-        return clean_nan(data)
-
-# --- ANALYSE ---
-def analyze_stock(ticker):
-    # Modèle vide par défaut
-    data = {
-        "ticker": ticker,
-        "name": ticker,
-        "price": 0,
-        "sector": "Inconnu",
-        "industry": "Inconnu",
-        "technicals": {"current_price": 0, "per": "N/A", "roe": "N/A", "dividend_yield": 0},
-        "ratios": {"debt_ratio": 0, "cash_ratio": 0, "impure_ratio": 0},
-        "compliance": {"is_halal": False, "business_check": {"failed": False, "found_keywords": []}}
-    }
-
-    try:
-        stock = yf.Ticker(ticker)
-        info = stock.info
-        
-        # Si Yahoo ne répond rien (fréquent sur Euronext), on renvoie le modèle vide mais propre
-        if not info:
-            print(f"⚠️ Info vide pour {ticker}")
-            return data 
-
-        # 1. INFO DE BASE
-        data["name"] = info.get('longName', info.get('shortName', ticker))
-        data["sector"] = info.get('sector', 'Inconnu')
-        data["industry"] = info.get('industry', 'Inconnu')
-        
-        # Prix (gestion de tous les cas possibles)
-        price = info.get('currentPrice') or info.get('regularMarketPreviousClose') or info.get('previousClose') or 0
-        data["price"] = price
-        data["technicals"]["current_price"] = price
-
-        # 2. DIVIDENDES (Logique blindée)
-        raw_div = info.get('dividendYield', 0)
-        if raw_div is None: 
-            final_div = 0
-        elif raw_div > 100: # Ex: 500 pour 5% -> on divise
-            final_div = raw_div / 100
-        elif raw_div > 1: # Ex: 3.5 pour 3.5% -> on garde
-            final_div = raw_div
-        else: # Ex: 0.03 pour 3% -> on multiplie
-            final_div = raw_div * 100
-        data["technicals"]["dividend_yield"] = round(final_div, 2)
-
-        # 3. PER & ROE
-        per = info.get('trailingPE') or info.get('forwardPE')
-        data["technicals"]["per"] = round(per, 2) if (per and not math.isnan(per)) else "N/A"
-
-        roe = info.get('returnOnEquity')
-        data["technicals"]["roe"] = round(roe * 100, 2) if (roe and not math.isnan(roe)) else "N/A"
-
-        # 4. BILAN (Dette & Cash)
-        mkt_cap = info.get('marketCap', 1) or 1
-        
-        balance = stock.balance_sheet
-        total_debt = 0
-        cash = 0
-
-        if not balance.empty:
-            # On utilise .get() sur les séries pour éviter les crashs si la ligne manque
-            try:
-                if 'Total Debt' in balance.index:
-                    val = balance.loc['Total Debt'].iloc[0]
-                    total_debt = val if not math.isnan(val) else 0
-                
-                if 'Cash And Cash Equivalents' in balance.index:
-                    val = balance.loc['Cash And Cash Equivalents'].iloc[0]
-                    cash = val if not math.isnan(val) else 0
-                elif 'Cash Financial' in balance.index:
-                    val = balance.loc['Cash Financial'].iloc[0]
-                    cash = val if not math.isnan(val) else 0
-            except Exception as e:
-                print(f"Erreur lecture bilan {ticker}: {e}")
-
-        # Calcul sécurisé
-        debt_ratio = (total_debt / mkt_cap) * 100
-        cash_ratio = (cash / mkt_cap) * 100
-
-        data["ratios"]["debt_ratio"] = round(debt_ratio, 2)
-        data["ratios"]["cash_ratio"] = round(cash_ratio, 2)
-
-        # 5. VERDICT ISLAMIQUE
-        summary = (info.get('longBusinessSummary') or info.get('description') or "").lower()
-        
-        # Liste noire
-        forbidden = ['alcohol', 'wine', 'spirit', 'champagne', 'brewery', 'pork', 'casino', 'gambling', 'tobacco', 'defense systems', 'weapon', 'adult entertainment']
-        finance_keywords = ['interest income', 'insurance underwriting', 'lending']
-        
-        is_islamic = 'islamic' in data["name"].lower() or 'rajhi' in data["name"].lower()
-        business_violation = False
-        found = []
-
-        # Scan universel
-        for word in forbidden:
-            if word in summary:
-                found.append(word)
-                business_violation = True
-        
-        # Scan finance (si pas islamique et pas "Energy" comme Aramco/Total)
-        if not is_islamic and data["sector"] not in ['Energy', 'Basic Materials', 'Utilities']:
-            if 'Bank' in data["industry"] or 'Insurance' in data["industry"]:
-                found.append(f"Secteur: {data['industry']}")
-                business_violation = True
-            for word in finance_keywords:
-                if word in summary:
-                    found.append(word)
-                    business_violation = True
-
-        data["compliance"]["business_check"]["failed"] = business_violation
-        data["compliance"]["business_check"]["found_keywords"] = list(set(found))
-        data["compliance"]["is_halal"] = (debt_ratio < 33) and (cash_ratio < 33) and (not business_violation)
-
-        # PASSAGE FINAL DU NETTOYEUR (Crucial pour éviter l'erreur 500)
-        return sanitize_result(data)
-
-    except Exception as e:
-        print(f"❌ CRASH TOTAL sur {ticker}: {e}")
-        return None
+def sanitize_value(val, default=0):
+    """Nettoie les données pour éviter les erreurs JSON avec NaN ou None."""
+    if pd.isna(val) or val is None:
+        return default
+    return val
 
 @screening_bp.route('/analyze', methods=['POST'])
-def analyze():
-    req = request.get_json()
-    tickers = [t.strip().upper() for t in req.get('tickers', '').split(',') if t.strip()]
+def analyze_ticker():
+    data = request.json
+    ticker_input = data.get('tickers', '').upper()
     
-    results = []
-    for t in tickers:
-        res = analyze_stock(t)
-        if res:
-            results.append(res)
-            
-    return jsonify({"results": results})
+    if not ticker_input:
+        return jsonify({"error": "Aucun ticker fourni"}), 400
+
+    try:
+        # 1. Récupération des données via yfinance
+        stock = ticker_data.Ticker(ticker_input)
+        info = stock.info
+        
+        # 2. Extraction des fondamentaux
+        market_cap = info.get('marketCap', 0)
+        total_debt = info.get('totalDebt', 0)
+        total_cash = info.get('totalCash', 0)
+        
+        # 3. Calcul des Ratios (AAOIFI)
+        # On évite la division par zéro si la Market Cap est absente
+        debt_ratio = (total_debt / market_cap * 100) if market_cap > 0 else 0
+        cash_ratio = (total_cash / market_cap * 100) if market_cap > 0 else 0
+        
+        # 4. Screener Sectoriel (Business Check)
+        sector = info.get('sector', '').lower()
+        industry = info.get('industry', '').lower()
+        business_summary = info.get('longBusinessSummary', '').lower()
+        
+        found_keywords = [
+            word for word in BANNED_KEYWORDS 
+            if word in sector or word in industry or word in business_summary
+        ]
+        
+        business_failed = len(found_keywords) > 0
+
+        # 5. Verdict Final
+        is_halal = (
+            not business_failed and 
+            debt_ratio < MAX_DEBT_RATIO and 
+            cash_ratio < MAX_CASH_RATIO
+        )
+
+        # 6. Formatage du résultat pour le Frontend
+        result = {
+            "ticker": ticker_input,
+            "name": info.get('longName', ticker_input),
+            "price": info.get('currentPrice', info.get('regularMarketPrice')),
+            "sector": info.get('sector', 'N/A'),
+            "industry": info.get('industry', 'N/A'),
+            "ratios": {
+                "debt_ratio": round(debt_ratio, 2),
+                "cash_ratio": round(cash_ratio, 2)
+            },
+            "compliance": {
+                "is_halal": is_halal,
+                "business_check": {
+                    "failed": business_failed,
+                    "found_keywords": found_keywords
+                }
+            },
+            "technicals": {
+                "per": sanitize_value(info.get('trailingPE'), "N/A"),
+                "roe": sanitize_value(info.get('returnOnEquity', 0) * 100, "N/A"),
+                "dividend_yield": sanitize_value(info.get('dividendYield', 0) * 100, 0)
+            }
+        }
+
+        return jsonify({"results": [result]})
+
+    except Exception as e:
+        print(f"Erreur lors de l'analyse de {ticker_input}: {str(e)}")
+        return jsonify({"error": "Erreur lors de l'analyse des données financières"}), 500
