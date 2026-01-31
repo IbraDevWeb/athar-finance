@@ -1,192 +1,79 @@
-import React, { useState } from 'react';
-import { 
-  Search, PieChart as PieIcon, Layers, Info, ArrowRight, ShieldCheck 
-} from 'lucide-react';
-import { 
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend 
-} from 'recharts';
-
-const API_URL = 'https://athar-api.onrender.com/api';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Layers, Hammer, ArrowRight, Sparkles } from 'lucide-react';
 
 export default function EtfXrayModule() {
-  const [ticker, setTicker] = useState('');
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  // Couleurs pour le Pie Chart
-  const COLORS = ['#c5a059', '#1e293b', '#64748b', '#94a3b8', '#cbd5e1', '#e2e8f0'];
-
-  const handleScan = async () => {
-    if (!ticker) return;
-    setLoading(true);
-    setError(null);
-    setData(null);
-
-    try {
-      const response = await fetch(`${API_URL}/screening/etf-scan`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticker: ticker })
-      });
-
-      if (!response.ok) throw new Error("Erreur lors de l'analyse");
-      const result = await response.json();
-      
-      if (!result.holdings || result.holdings.length === 0) {
-         setError("Données détaillées non disponibles pour cet ETF (Essayez SPUS, HLAL, GLDM).");
-      } else {
-         setData(result);
-      }
-    } catch (err) {
-      setError("Impossible de contacter le serveur.");
-    } finally {
-      setLoading(false);
-    }
+  // Fonction pour rediriger vers le screener (si tu utilises react-router)
+  // Sinon, on peut juste changer l'état dans App.js via une props, 
+  // mais pour une page statique "en construction", un simple lien suffit.
+  const handleGoToScreener = () => {
+    // Si ton système de navigation dans App.js est basé sur un état, 
+    // ce bouton ne fera rien d'autre que de l'animation pour l'instant.
+    // L'utilisateur utilisera le menu latéral pour changer de page.
+    console.log("Redirection vers le screener..."); 
   };
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-6xl mx-auto pb-20">
+    <div className="min-h-[70vh] flex flex-col items-center justify-center text-center p-8 animate-fade-in max-w-2xl mx-auto">
       
-      {/* HEADER */}
-      <div className="text-center space-y-4">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border border-brand-gold/30 bg-brand-gold/5 mb-2 text-brand-gold">
-           <Layers size={32} />
+      {/* VISUEL CENTRAL */}
+      <div className="relative mb-10 group">
+        {/* Cercle de fond animé */}
+        <div className="w-40 h-40 bg-brand-gold/10 rounded-full flex items-center justify-center relative z-10 transition-transform duration-500 group-hover:scale-110">
+           <Layers size={64} className="text-brand-gold opacity-80" />
         </div>
-        <h1 className="font-display text-4xl font-bold text-brand-dark">ETF X-Ray 🩻</h1>
-        <p className="text-gray-500 max-w-2xl mx-auto">
-          Regardez à travers la boîte. Découvrez exactement quelles entreprises vous possédez quand vous achetez un ETF.
-        </p>
+        
+        {/* Icône "Travaux" superposée */}
+        <div className="absolute -bottom-4 -right-4 bg-brand-dark p-4 rounded-full shadow-xl z-20 border-4 border-[#f8f9fa] dark:border-[#050505]">
+            <Hammer size={24} className="text-brand-gold animate-pulse" />
+        </div>
+
+        {/* Effet "Particules" */}
+        <div className="absolute top-0 right-0 text-brand-gold animate-bounce opacity-50" style={{ animationDuration: '3s' }}>
+            <Sparkles size={20} />
+        </div>
       </div>
 
-      {/* RECHERCHE */}
-      <div className="max-w-xl mx-auto relative group">
-          <input
-              type="text"
-              value={ticker}
-              onChange={(e) => setTicker(e.target.value.toUpperCase())}
-              onKeyPress={(e) => e.key === 'Enter' && handleScan()}
-              placeholder="Ex: SPUS, HLAL, GLDM..."
-              className="block w-full pl-6 pr-14 py-4 border-2 border-gray-100 bg-white text-brand-dark rounded-2xl focus:outline-none focus:border-brand-gold transition-all font-bold text-lg shadow-lg"
-          />
-          <button
-              onClick={handleScan}
-              disabled={loading}
-              className="absolute right-2 top-2 bottom-2 bg-brand-dark text-brand-gold rounded-xl px-4 flex items-center justify-center hover:bg-gray-800 transition-colors disabled:opacity-50"
+      {/* TEXTES */}
+      <h1 className="text-4xl md:text-5xl font-display font-bold text-brand-dark dark:text-white mb-6">
+        Construction en cours
+      </h1>
+      
+      <div className="space-y-4 text-gray-500 dark:text-gray-400 text-lg leading-relaxed max-w-lg mx-auto">
+          <p>
+              Le module <strong className="text-brand-gold">ETF X-Ray 🩻</strong> est actuellement dans notre atelier.
+          </p>
+          <p className="text-sm">
+              Nous développons un moteur de données exclusif pour vous garantir une analyse fiable de la composition des fonds islamiques. La qualité exige un peu de patience.
+          </p>
+      </div>
+
+      {/* BARRE DE PROGRESSION FACTICE (Pour le style) */}
+      <div className="w-full max-w-md h-1.5 bg-gray-200 dark:bg-white/10 rounded-full mt-10 overflow-hidden relative">
+          <div className="h-full bg-brand-gold w-3/4 rounded-full absolute top-0 left-0 animate-pulse"></div>
+          <div className="w-full h-full absolute top-0 left-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+      </div>
+      <p className="text-xs font-bold text-brand-gold uppercase tracking-widest mt-3">Progression : 75%</p>
+
+      {/* BOUTON D'ACTION */}
+      <div className="mt-12">
+          <p className="text-sm text-gray-400 mb-4">En attendant, utilisez nos autres outils :</p>
+          <button 
+            // Idéalement, il faudrait passer une fonction de navigation depuis App.js
+            // Pour l'instant, c'est visuel. L'utilisateur cliquera sur le menu.
+            className="px-8 py-4 bg-brand-dark hover:bg-black text-brand-gold font-bold rounded-2xl shadow-lg transition-all active:scale-95 flex items-center gap-3 mx-auto"
           >
-              {loading ? <div className="animate-spin h-5 w-5 border-2 border-current rounded-full border-t-transparent"></div> : <Search size={20} />}
+              <Search size={20} />
+              Aller vers le Screener Pro
+              <ArrowRight size={20} />
           </button>
       </div>
 
-      {error && (
-        <div className="max-w-xl mx-auto p-4 bg-red-50 text-red-600 rounded-xl text-center text-sm font-bold border border-red-100">
-            {error}
-        </div>
-      )}
-
-      {/* RÉSULTATS */}
-      {data && (
-        <div className="animate-fade-in space-y-6">
-            
-            {/* 1. Carte Identité */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="bg-brand-gold/10 text-brand-gold px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest">{data.ticker}</span>
-                        <span className="text-xs text-gray-400 uppercase font-bold">ETF Certifié</span>
-                    </div>
-                    <h2 className="text-2xl font-display font-bold text-brand-dark">{data.name}</h2>
-                </div>
-                <div className="text-right hidden md:block">
-                    <p className="text-xs text-gray-400 mb-1">Diversification</p>
-                    <div className="flex items-center gap-1 text-emerald-500 font-bold text-sm">
-                        <ShieldCheck size={16} />
-                        <span>Haute</span>
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid lg:grid-cols-2 gap-6">
-                
-                {/* 2. Top 10 Holdings */}
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                    <h3 className="font-bold text-brand-dark mb-6 flex items-center gap-2">
-                        <span className="w-1.5 h-6 bg-brand-gold rounded-full"></span>
-                        Ce que vous possédez réellement
-                    </h3>
-                    <div className="space-y-3">
-                        {data.holdings.map((company, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors group">
-                                <div className="flex items-center gap-3">
-                                    <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-[10px] font-bold">
-                                        {idx + 1}
-                                    </span>
-                                    <span className="font-bold text-gray-700 group-hover:text-brand-dark">{company.name}</span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-brand-gold" style={{ width: `${company.percent * 2}%` }}></div>
-                                    </div>
-                                    <span className="text-sm font-mono font-bold text-brand-gold w-12 text-right">{company.percent}%</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="mt-6 p-4 bg-brand-gold/5 rounded-xl border border-brand-gold/10 text-center">
-                        <p className="text-xs text-gray-500 italic">
-                            En achetant 1 part de <strong>{data.ticker}</strong>, vous investissez automatiquement dans toutes ces sociétés.
-                        </p>
-                    </div>
-                </div>
-
-                {/* 3. Répartition Sectorielle */}
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-                    <h3 className="font-bold text-brand-dark mb-2 flex items-center gap-2">
-                        <span className="w-1.5 h-6 bg-brand-dark rounded-full"></span>
-                        Répartition par Secteur
-                    </h3>
-                    
-                    <div className="flex-1 min-h-[300px] relative">
-                        {data.sectors.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={data.sectors}
-                                        innerRadius={60}
-                                        outerRadius={100}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {data.sectors.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip 
-                                        formatter={(val) => `${val}%`}
-                                        contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'}}
-                                    />
-                                    <Legend />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                                <PieIcon size={48} className="mb-2 opacity-20" />
-                                <span className="text-xs">Données sectorielles indisponibles</span>
-                            </div>
-                        )}
-                    </div>
-                    
-                    <div className="mt-4 flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
-                        <Info size={16} className="text-brand-dark mt-0.5 flex-shrink-0" />
-                        <p className="text-xs text-gray-500 leading-relaxed">
-                            <strong>Pourquoi c'est important ?</strong> Une bonne diversification sectorielle protège votre portefeuille. Si la "Tech" chute, la "Santé" ou l'"Énergie" peuvent compenser.
-                        </p>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-      )}
     </div>
   );
 }
+
+// Nécessaire pour l'icône du bouton ci-dessus
+import { Search } from 'lucide-react';

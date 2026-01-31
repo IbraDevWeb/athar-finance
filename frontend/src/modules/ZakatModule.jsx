@@ -1,170 +1,299 @@
-import React, { useState } from 'react';
-
-const API_URL = 'https://athar-api.onrender.com/api';
+import React, { useState, useEffect } from 'react';
+import { 
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend 
+} from 'recharts';
+import { 
+  Calculator, Heart, Info, Coins, Banknote, Landmark, 
+  TrendingUp, AlertCircle, CheckCircle, ArrowRight 
+} from 'lucide-react';
 
 export default function ZakatModule() {
-  const [values, setValues] = useState({
-    cash: 0, savings: 0, stocks: 0, crypto: 0, gold: 0, debts: 0
+  const [activeTab, setActiveTab] = useState('maal'); // 'maal' (épargne) ou 'purification' (dividendes)
+
+  // --- ÉTATS ZAKAT AL MAAL ---
+  // Valeurs par défaut (Prix de l'or au gramme ~70€, Nissab ~5950€)
+  const [goldPrice, setGoldPrice] = useState(70); 
+  const [assets, setAssets] = useState({
+    cash: 0,        // Comptes courants + Espèces
+    savings: 0,     // Livrets (A, LDD...)
+    gold: 0,        // Valeur Or/Argent physique
+    shares: 0,      // Actions / ETF / Crypto (Valeur marché)
+    business: 0,    // Marchandises pour commerce
+    debts: 0        // Dettes à court terme (à déduire)
   });
-  
-  // État pour choisir le Nisab (gold par défaut)
-  const [nisabType, setNisabType] = useState('gold'); 
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  const handleChange = (e) => {
-    setValues({ ...values, [e.target.name]: parseFloat(e.target.value) || 0 });
-  };
+  // --- ÉTATS PURIFICATION ---
+  const [dividendAmount, setDividendAmount] = useState(100);
+  const [impurePercent, setImpurePercent] = useState(3); // Ex: 3% de revenus illicites dans l'entreprise
 
-  const handleCalculate = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${API_URL}/zakat/calculate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values)
-      });
-      const data = await response.json();
-      if (data.success) {
-        setResult(data.result);
-      } else {
-        setError("Erreur calcul.");
-      }
-    } catch (err) {
-      setError("Erreur connexion serveur.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // --- CALCULS ---
+  const nissab = goldPrice * 85; // Seuil légal (85g d'or)
+  const totalAssets = (assets.cash + assets.savings + assets.gold + assets.shares + assets.business);
+  const netWealth = totalAssets - assets.debts;
+  const zakatDue = Math.max(0, netWealth * 0.025); // 2.5%
+  const isEligible = netWealth >= nissab;
 
-  // Logique d'affichage dynamique selon le choix Or/Argent
-  const getCurrentNisab = () => {
-    if (!result) return 0;
-    return nisabType === 'gold' 
-      ? result.nisab_data.gold_threshold 
-      : result.nisab_data.silver_threshold;
-  };
+  const purificationDue = dividendAmount * (impurePercent / 100);
 
-  const isZakatable = result ? result.net_wealth >= getCurrentNisab() : false;
+  // Données Graphique
+  const chartData = [
+    { name: 'Liquidités', value: assets.cash + assets.savings },
+    { name: 'Investissements', value: assets.shares + assets.business },
+    { name: 'Or & Bijoux', value: assets.gold },
+  ].filter(d => d.value > 0);
+
+  const COLORS = ['#1e293b', '#c5a059', '#64748b'];
+  const formatMoney = (val) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val);
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in max-w-6xl mx-auto pb-20">
       
-      {/* FORMULAIRE */}
-      <div className="glass rounded-3xl p-8 border-t-4 border-amber-400">
-        <h2 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
-          🤲 Calculateur Zakat Intelligent
-        </h2>
-        <p className="text-gray-500 mb-8">
-          Renseignez vos avoirs (Hawl atteint). Les seuils sont mis à jour en direct.
+      {/* HEADER */}
+      <div className="text-center space-y-4">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border border-brand-gold/30 bg-brand-gold/5 mb-2 text-brand-gold">
+           <Heart size={32} />
+        </div>
+        <h1 className="font-display text-4xl font-bold text-brand-dark">Purification & Partage</h1>
+        <p className="text-gray-500 max-w-2xl mx-auto">
+          "Prélève de leurs biens une aumône par laquelle tu les purifies et les bénis." (Coran 9:103)
         </p>
-        
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* ACTIFS */}
-          <div className="space-y-4">
-            <h3 className="font-bold text-emerald-800 uppercase text-sm border-b border-emerald-100 pb-2">Vos Avoirs (+)</h3>
-            <InputRow label="Argent liquide / Compte" name="cash" onChange={handleChange} />
-            <InputRow label="Épargne (Livrets)" name="savings" onChange={handleChange} />
-            <InputRow label="Actions (Valeur Totale)" name="stocks" onChange={handleChange} />
-            <InputRow label="Crypto-monnaies" name="crypto" onChange={handleChange} />
-            <InputRow label="Or & Argent (Physique)" name="gold" onChange={handleChange} />
-          </div>
 
-          {/* PASSIFS */}
-          <div className="space-y-4">
-            <h3 className="font-bold text-red-800 uppercase text-sm border-b border-red-100 pb-2">Vos Dettes (-)</h3>
-            <div className="bg-red-50 p-4 rounded-xl border border-red-100">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Dettes immédiates</label>
-              <input type="number" name="debts" onChange={handleChange} className="w-full p-3 rounded-lg border border-red-200" placeholder="0" />
-            </div>
-          </div>
+        {/* TABS NAVIGATION */}
+        <div className="flex justify-center mt-6 gap-4">
+             <button 
+                onClick={() => setActiveTab('maal')}
+                className={`px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-widest transition-all ${activeTab === 'maal' ? 'bg-brand-dark text-brand-gold shadow-lg' : 'bg-white text-gray-400 hover:bg-gray-50 border border-gray-100'}`}
+             >
+                 Zakat Al-Maal (Épargne)
+             </button>
+             <button 
+                onClick={() => setActiveTab('purification')}
+                className={`px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-widest transition-all ${activeTab === 'purification' ? 'bg-brand-dark text-brand-gold shadow-lg' : 'bg-white text-gray-400 hover:bg-gray-50 border border-gray-100'}`}
+             >
+                 Purification (Dividendes)
+             </button>
         </div>
-
-        <button 
-          onClick={handleCalculate} disabled={loading}
-          className="w-full mt-8 bg-gradient-to-r from-amber-500 to-yellow-500 text-white py-4 rounded-xl font-bold text-xl shadow-lg transition hover:scale-[1.01]"
-        >
-          {loading ? 'Récupération des cours en direct...' : 'Calculer ma Zakat'}
-        </button>
       </div>
 
-      {/* RÉSULTATS */}
-      {result && (
-        <div className="glass rounded-3xl p-8 animate-fade-in">
-          
-          {/* --- SÉLECTEUR DE NISAB (NOUVEAU) --- */}
-          <div className="flex justify-center mb-8">
-            <div className="bg-gray-100 p-1 rounded-xl flex">
-              <button 
-                onClick={() => setNisabType('gold')}
-                className={`px-6 py-2 rounded-lg text-sm font-bold transition ${nisabType === 'gold' ? 'bg-white shadow text-amber-600' : 'text-gray-500 hover:bg-gray-200'}`}
-              >
-                🥇 Seuil OR (Majorité)
-              </button>
-              <button 
-                onClick={() => setNisabType('silver')}
-                className={`px-6 py-2 rounded-lg text-sm font-bold transition ${nisabType === 'silver' ? 'bg-white shadow text-gray-600' : 'text-gray-500 hover:bg-gray-200'}`}
-              >
-                🥈 Seuil ARGENT (Précaution)
-              </button>
-            </div>
-          </div>
+      {/* --- ONGLET 1 : ZAKAT AL MAAL --- */}
+      {activeTab === 'maal' && (
+          <div className="grid lg:grid-cols-12 gap-8">
+              
+              {/* GAUCHE : FORMULAIRE */}
+              <div className="lg:col-span-7 space-y-6">
+                  
+                  {/* Carte Nissab */}
+                  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between gap-4">
+                      <div>
+                          <p className="text-xs font-bold text-gray-400 uppercase mb-1">Seuil d'imposition (Nissab)</p>
+                          <div className="flex items-end gap-2">
+                              <span className="text-2xl font-bold text-brand-dark">{formatMoney(nissab)}</span>
+                              <span className="text-xs text-gray-500 mb-1">(Basé sur 85g d'or)</span>
+                          </div>
+                      </div>
+                      <div className="text-right">
+                           <label className="text-[10px] font-bold text-brand-gold uppercase block mb-1">Prix Or / Gramme</label>
+                           <div className="relative w-24 ml-auto">
+                               <input 
+                                  type="number" 
+                                  value={goldPrice} 
+                                  onChange={(e) => setGoldPrice(Number(e.target.value))}
+                                  className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg text-right font-mono font-bold outline-none focus:border-brand-gold"
+                               />
+                               <span className="absolute right-8 top-2 text-gray-400 text-xs">€</span>
+                           </div>
+                      </div>
+                  </div>
 
-          <div className="text-center">
-            {isZakatable ? (
-              <div className="space-y-4">
-                <div className="inline-block p-4 rounded-full bg-emerald-100 text-emerald-700 text-5xl mb-2">🕌</div>
-                <h3 className="text-2xl font-bold text-emerald-800">Zakat obligatoire</h3>
-                <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">
-                  {result.zakat_payable.toLocaleString()} €
-                </div>
-                <p className="text-emerald-700 font-medium">
-                  Votre patrimoine ({result.net_wealth.toLocaleString()} €) dépasse le Nisab {nisabType === 'gold' ? 'Or' : 'Argent'}.
-                </p>
+                  {/* Inputs Actifs */}
+                  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-5">
+                      <h3 className="font-bold text-brand-dark flex items-center gap-2 mb-4">
+                          <Calculator size={20}/> Vos Avoirs (détenus depuis 1 an)
+                      </h3>
+                      
+                      <InputRow 
+                        label="Comptes Bancaires & Espèces" 
+                        icon={Banknote} 
+                        value={assets.cash} 
+                        onChange={(v) => setAssets({...assets, cash: v})} 
+                      />
+                      <InputRow 
+                        label="Épargne Disponible (Livret A, LDD...)" 
+                        icon={Landmark} 
+                        value={assets.savings} 
+                        onChange={(v) => setAssets({...assets, savings: v})} 
+                      />
+                      <InputRow 
+                        label="Investissements (Actions, Crypto)" 
+                        icon={TrendingUp} 
+                        tooltip="Valeur totale du portefeuille à ce jour."
+                        value={assets.shares} 
+                        onChange={(v) => setAssets({...assets, shares: v})} 
+                      />
+                      <InputRow 
+                        label="Or & Argent (Valeur poids)" 
+                        icon={Coins} 
+                        value={assets.gold} 
+                        onChange={(v) => setAssets({...assets, gold: v})} 
+                      />
+                      
+                      <div className="pt-4 border-t border-gray-100">
+                          <InputRow 
+                            label="Dettes à court terme (À déduire)" 
+                            icon={AlertCircle} 
+                            isDeduction
+                            value={assets.debts} 
+                            onChange={(v) => setAssets({...assets, debts: v})} 
+                          />
+                      </div>
+                  </div>
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="inline-block p-4 rounded-full bg-gray-100 text-gray-400 text-5xl mb-2">😌</div>
-                <h3 className="text-2xl font-bold text-gray-600">Pas de Zakat</h3>
-                <p className="text-gray-500">
-                  Votre patrimoine ({result.net_wealth.toLocaleString()} €) est inférieur au seuil.
-                </p>
-              </div>
-            )}
 
-            {/* Détails Techniques */}
-            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 text-left bg-gray-50 p-6 rounded-2xl border border-gray-100 text-sm">
-              <StatItem label="Nisab OR (85g)" value={result.nisab_data.gold_threshold} sub={`Cours: ${result.nisab_data.gold_price_g} €/g`} active={nisabType === 'gold'} />
-              <StatItem label="Nisab ARGENT (595g)" value={result.nisab_data.silver_threshold} sub={`Cours: ${result.nisab_data.silver_price_g} €/g`} active={nisabType === 'silver'} />
-              <StatItem label="Patrimoine Net" value={result.net_wealth} />
-              <StatItem label="Source Données" value={result.nisab_data.source === 'live' ? '🟢 Marché Direct' : '🔴 Sauvegarde'} />
-            </div>
+              {/* DROITE : RÉSULTATS */}
+              <div className="lg:col-span-5 space-y-6">
+                  
+                  {/* Carte Résultat Principal */}
+                  <div className={`p-8 rounded-3xl text-center transition-all duration-500 shadow-xl ${isEligible ? 'bg-brand-dark text-white' : 'bg-gray-100 text-gray-400'}`}>
+                      <p className="font-bold uppercase tracking-widest text-xs mb-2 opacity-70">
+                          {isEligible ? "Montant à payer" : "Vous n'êtes pas imposable"}
+                      </p>
+                      <div className="text-5xl font-display font-bold mb-4">
+                          {isEligible ? formatMoney(zakatDue) : "0 €"}
+                      </div>
+                      
+                      <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold ${isEligible ? 'bg-brand-gold text-brand-dark' : 'bg-gray-200 text-gray-500'}`}>
+                          {isEligible ? <CheckCircle size={14}/> : <AlertCircle size={14}/>}
+                          <span>{isEligible ? "Éligible au paiement" : `Patrimoine < ${formatMoney(nissab)}`}</span>
+                      </div>
+                  </div>
+
+                  {/* Jauge Nissab */}
+                  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                      <div className="flex justify-between text-xs font-bold uppercase text-gray-400 mb-2">
+                          <span>0 €</span>
+                          <span>Nissab: {formatMoney(nissab)}</span>
+                      </div>
+                      <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden relative">
+                          {/* Marqueur Nissab */}
+                          <div className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10" style={{ left: `${Math.min((nissab / (nissab * 1.5)) * 100, 100)}%` }}></div>
+                          
+                          {/* Barre Progression */}
+                          <div 
+                             className={`h-full transition-all duration-1000 ${isEligible ? 'bg-brand-gold' : 'bg-gray-400'}`}
+                             style={{ width: `${Math.min((netWealth / (nissab * 1.5)) * 100, 100)}%` }}
+                          ></div>
+                      </div>
+                      <p className="text-center text-xs mt-3 text-gray-500">
+                          Votre patrimoine net : <strong>{formatMoney(netWealth)}</strong>
+                      </p>
+                  </div>
+
+                  {/* Graphique Répartition */}
+                  {netWealth > 0 && (
+                      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-[250px] flex flex-col">
+                          <h4 className="text-xs font-bold uppercase text-gray-400 mb-2 text-center">Composition Patrimoine</h4>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={chartData} innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value"
+                                >
+                                    {chartData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip formatter={(val) => formatMoney(val)} />
+                                <Legend wrapperStyle={{fontSize: '10px'}} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                  )}
+
+              </div>
           </div>
-        </div>
       )}
+
+      {/* --- ONGLET 2 : PURIFICATION --- */}
+      {activeTab === 'purification' && (
+          <div className="max-w-3xl mx-auto animate-fade-in">
+              <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-lg text-center mb-8">
+                  <div className="inline-flex justify-center items-center w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full mb-4">
+                      <Info size={24} />
+                  </div>
+                  <h3 className="text-2xl font-bold text-brand-dark mb-2">Pourquoi purifier ?</h3>
+                  <p className="text-gray-500 leading-relaxed text-sm">
+                      Même une action "Halal" peut générer une petite part de revenus illicites (ex: intérêts de trésorerie). 
+                      Il est recommandé de donner cette part en charité (sans attendre de récompense) pour nettoyer votre argent.
+                  </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-8">
+                  <div className="bg-white p-6 rounded-2xl border border-gray-100">
+                      <h4 className="font-bold text-brand-dark mb-6 uppercase text-sm tracking-widest">Calculateur</h4>
+                      <div className="space-y-4">
+                          <div>
+                              <label className="text-xs font-bold text-gray-400 uppercase">Dividendes Reçus</label>
+                              <div className="relative mt-1">
+                                  <input 
+                                      type="number" value={dividendAmount} onChange={(e) => setDividendAmount(Number(e.target.value))}
+                                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-brand-dark outline-none focus:border-brand-gold"
+                                  />
+                                  <span className="absolute right-4 top-3 text-gray-400 font-bold">€</span>
+                              </div>
+                          </div>
+                          <div>
+                              <label className="text-xs font-bold text-gray-400 uppercase">Part Impure (%)</label>
+                              <div className="relative mt-1">
+                                  <input 
+                                      type="number" value={impurePercent} onChange={(e) => setImpurePercent(Number(e.target.value))}
+                                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-brand-dark outline-none focus:border-brand-gold"
+                                  />
+                                  <span className="absolute right-4 top-3 text-gray-400 font-bold">%</span>
+                              </div>
+                              <p className="text-[10px] text-gray-400 mt-2">
+                                  * Indiqué dans les rapports annuels ou via le Screener Pro.
+                              </p>
+                          </div>
+                      </div>
+                  </div>
+
+                  <div className="bg-brand-dark p-8 rounded-2xl text-white flex flex-col justify-center items-center text-center shadow-xl">
+                      <p className="font-bold uppercase tracking-widest text-xs opacity-60 mb-2">Montant à donner</p>
+                      <p className="text-5xl font-display font-bold text-brand-gold mb-6">{formatMoney(purificationDue)}</p>
+                      <button className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-bold transition-colors flex items-center gap-2">
+                          Trouver une association <ArrowRight size={16} />
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
+
     </div>
   );
 }
 
-function InputRow({ label, name, onChange }) {
-  return (
-    <div>
-      <label className="text-xs font-bold text-gray-500 uppercase">{label}</label>
-      <input type="number" name={name} onChange={onChange} className="w-full p-3 mt-1 rounded-xl border border-gray-200 focus:border-amber-400 outline-none" placeholder="0" />
-    </div>
-  );
-}
-
-function StatItem({ label, value, sub, active }) {
-  return (
-    <div className={`p-3 rounded-xl ${active ? 'bg-amber-50 border border-amber-200' : ''}`}>
-      <div className="font-bold text-gray-500 text-xs">{label}</div>
-      <div className={`text-lg font-bold ${active ? 'text-amber-700' : 'text-gray-800'}`}>
-        {typeof value === 'number' ? value.toLocaleString() : value} {typeof value === 'number' && '€'}
-      </div>
-      {sub && <div className="text-[10px] text-gray-400">{sub}</div>}
-    </div>
-  );
+// --- SOUS-COMPOSANT LIGNE INPUT ---
+function InputRow({ label, icon: Icon, value, onChange, isDeduction, tooltip }) {
+    return (
+        <div className="flex items-center gap-4">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isDeduction ? 'bg-red-50 text-red-500' : 'bg-gray-50 text-brand-dark'}`}>
+                <Icon size={20} />
+            </div>
+            <div className="flex-1">
+                <p className={`text-xs font-bold uppercase ${isDeduction ? 'text-red-500' : 'text-gray-500'} flex items-center gap-1`}>
+                    {label}
+                    {tooltip && <Info size={12} className="cursor-help text-gray-300"/>}
+                </p>
+                <div className="relative mt-1">
+                    <input 
+                        type="number" 
+                        value={value === 0 ? '' : value} 
+                        onChange={(e) => onChange(Number(e.target.value))}
+                        placeholder="0"
+                        className={`w-full p-2 bg-transparent border-b-2 font-mono font-bold text-lg outline-none transition-colors ${isDeduction ? 'border-red-100 focus:border-red-500 text-red-600' : 'border-gray-100 focus:border-brand-gold text-brand-dark'}`}
+                    />
+                    <span className="absolute right-0 bottom-2 text-gray-300 font-bold">€</span>
+                </div>
+            </div>
+        </div>
+    );
 }
