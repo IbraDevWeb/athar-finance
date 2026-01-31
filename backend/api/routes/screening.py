@@ -107,7 +107,7 @@ def analyze_stock(ticker):
             'pork', 'porcine', # Porc
             'casino', 'gambling', 'betting', # Jeux
             'tobacco', 'cigarette', # Tabac
-            'defense systems', 'weapon', # Armement
+            'defense systems', 'weapon', 'defense' # Armement
             'adult entertainment' # Pornographie
         ]
         
