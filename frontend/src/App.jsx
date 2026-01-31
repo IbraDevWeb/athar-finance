@@ -11,8 +11,9 @@ import Portfolio from "./modules/PortfolioModule";
 import Academy from "./modules/AcademyModule";
 import Watchlist from "./modules/WatchlistModule"; 
 import Comparator from "./modules/ComparatorModule";
-// [NOUVEAU] Import du module News
 import NewsModule from "./modules/NewsModule";
+// [NOUVEAU] Import du module Immobilier
+import House from "./modules/HouseModule";
 
 function App() {
   // États de navigation
@@ -21,9 +22,8 @@ function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // États du Thème (Dark Mode)
-  const [isDarkMode, setIsDarkMode] = useState(false); // Faux = Mode Clair par défaut
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Fonction pour changer le thème
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
     if (!isDarkMode) {
@@ -33,23 +33,20 @@ function App() {
     }
   };
 
-  // Fonction de navigation
   const handleNavigate = (page) => {
     setCurrentPage(page);
-    setIsMobileMenuOpen(false); // Ferme le menu mobile après clic
+    setIsMobileMenuOpen(false);
   };
 
-  // Fonction spéciale pour "Analyser" depuis la Watchlist
   const handleWatchlistAnalyze = (ticker) => {
     setScreenerTicker(ticker);
     handleNavigate('screener');
   };
 
   return (
-    // CONTENEUR PRINCIPAL (Gère le fond global Jour/Nuit)
     <div className="flex h-screen overflow-hidden font-sans bg-[#f8f9fa] dark:bg-[#050505] transition-colors duration-300 text-gray-900 dark:text-white">
       
-      {/* --- HEADER MOBILE (Visible uniquement sur téléphone) --- */}
+      {/* --- HEADER MOBILE --- */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-[#050505] border-b border-gray-200 dark:border-white/10 p-4 flex justify-between items-center transition-colors">
         <div className="flex items-center gap-3">
              <div className="w-8 h-8 rounded bg-gradient-to-br from-brand-gold to-yellow-600 flex items-center justify-center text-white shadow-lg">
@@ -59,14 +56,12 @@ function App() {
         </div>
         
         <div className="flex gap-2">
-            {/* Bouton Thème Mobile */}
             <button 
                 onClick={toggleTheme} 
                 className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
             >
                 {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            {/* Bouton Menu Mobile */}
             <button 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
                 className="p-2 text-brand-gold bg-brand-gold/10 rounded-lg hover:bg-brand-gold/20 transition-colors"
@@ -76,7 +71,7 @@ function App() {
         </div>
       </div>
 
-      {/* --- SIDEBAR (Barre Latérale) --- */}
+      {/* --- SIDEBAR --- */}
       <aside className={`
           fixed inset-y-0 left-0 z-40 w-72 
           bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-white/5 
@@ -92,7 +87,6 @@ function App() {
         />
       </aside>
 
-      {/* Overlay Sombre (Quand menu mobile ouvert) */}
       {isMobileMenuOpen && (
         <div 
             onClick={() => setIsMobileMenuOpen(false)} 
@@ -104,7 +98,7 @@ function App() {
       <main className="flex-1 overflow-y-auto relative w-full pt-20 lg:pt-0 scroll-smooth">
         <div className="max-w-7xl mx-auto p-4 lg:p-10 min-h-screen">
           
-          {/* Header Desktop (Bouton Thème) */}
+          {/* Header Desktop */}
           <div className="hidden lg:flex justify-end mb-6">
              <button 
                 onClick={toggleTheme} 
@@ -114,7 +108,7 @@ function App() {
              </button>
           </div>
 
-          {/* Titre de la Page (Sauf Accueil) */}
+          {/* Titre de la Page */}
           {currentPage !== 'home' && (
              <header className="mb-8 animate-fade-in border-b border-gray-200 dark:border-white/10 pb-6">
                 <h2 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
@@ -126,6 +120,8 @@ function App() {
                   {currentPage === 'zakat' && 'Purification'}
                   {currentPage === 'portfolio' && 'Portefeuille'}
                   {currentPage === 'academy' && 'Académie'}
+                  {/* [NOUVEAU] Titre Immobilier */}
+                  {currentPage === 'house' && 'Immobilier vs Bourse'}
                 </h2>
                 <p className="text-gray-500 dark:text-gray-400 text-sm font-light pl-5">
                     Gérez vos actifs avec précision et éthique.
@@ -137,16 +133,10 @@ function App() {
           <div className="animate-fade-in">
             {currentPage === 'home' && <Home onNavigate={handleNavigate} />}
             
-            {/* [MODIFICATION ICI] On a groupé le Screener et les News */}
             {currentPage === 'screener' && (
                 <div className="space-y-12">
-                    {/* Le Screener Normal */}
                     <Screener autoSearch={screenerTicker} />
-                    
-                    {/* Séparateur Visuel */}
                     <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-white/10 to-transparent opacity-50"></div>
-                    
-                    {/* Le Nouveau Module News en dessous */}
                     <section>
                         <div className="text-center mb-8">
                             <h3 className="text-xl font-bold opacity-80 dark:text-white">Contexte de Marché</h3>
@@ -163,12 +153,14 @@ function App() {
             {currentPage === 'portfolio' && <Portfolio />}
             {currentPage === 'academy' && <Academy />}
             {currentPage === 'watchlist' && <Watchlist onAnalyze={handleWatchlistAnalyze} />}
+            
+            {/* [NOUVEAU] Affichage du module House */}
+            {currentPage === 'house' && <House />}
           </div>
 
-          {/* Footer Global */}
           <footer className="mt-20 py-8 text-center border-t border-gray-200 dark:border-white/5">
              <p className="text-gray-400 text-[10px] uppercase tracking-widest hover:text-brand-gold transition-colors">
-               Athar Private Finance • v2.2
+               Athar Private Finance • v2.3
              </p>
           </footer>
         </div>
