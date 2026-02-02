@@ -10,15 +10,15 @@ root.render(
   </React.StrictMode>
 );
 
-// --- AJOUT PWA : ENREGISTREMENT DU SERVICE WORKER ---
+// PWA : Enregistrement du Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
-        console.log('Service Worker enregistré avec succès:', registration.scope);
+        console.log('SW enregistré:', registration.scope);
       })
-      .catch((error) => {
-        console.log('Echec de l\'enregistrement du Service Worker:', error);
+      .catch((err) => {
+        console.log('Echec SW:', err);
       });
   });
 }
