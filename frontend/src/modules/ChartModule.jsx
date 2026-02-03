@@ -2,25 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar 
 } from 'recharts';
-import { Search, TrendingUp, TrendingDown, Activity, Clock, BarChart2, DollarSign, Calendar } from 'lucide-react';
+import { 
+  Search, TrendingUp, TrendingDown, Activity, Clock, 
+  BarChart2, ArrowUpRight, ArrowDownRight, Maximize2, RefreshCw 
+} from 'lucide-react';
 
-const API_URL = 'https://athar-api.onrender.com/api'; // Ou ton URL locale pour tester
+const API_URL = 'https://athar-api.onrender.com/api';
 
 export default function ChartModule() {
-  const [ticker, setTicker] = useState('AAPL');
+  const [ticker, setTicker] = useState('NVDA');
   const [inputTicker, setInputTicker] = useState('');
   const [period, setPeriod] = useState('1y');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Périodes disponibles
   const periods = [
     { label: '1J', val: '1d' },
     { label: '1S', val: '5d' },
     { label: '1M', val: '1mo' },
     { label: '6M', val: '6mo' },
     { label: '1A', val: '1y' },
-    { label: '5A', val: '5y' },
-    { label: 'MAX', val: 'max' }
+    { label: '5A', val: '5y' }
   ];
 
   useEffect(() => {
@@ -52,155 +55,197 @@ export default function ChartModule() {
     }
   };
 
-  // Couleurs dynamiques (Vert si positif, Rouge si négatif)
+  // --- DESIGN SYSTEM ---
   const isPositive = data?.change_p >= 0;
-  const mainColor = isPositive ? '#10b981' : '#ef4444'; // Emerald vs Red
+  // Vert Émeraude pour la hausse, Rouge Rose pour la baisse (plus moderne)
+  const mainColor = isPositive ? '#10b981' : '#f43f5e'; 
   const gradientId = "colorPrice";
+  const glowId = "glowShadow";
 
   return (
-    <div className="max-w-7xl mx-auto pb-20 animate-fade-in">
+    <div className="max-w-7xl mx-auto pb-20 animate-fade-in space-y-6">
       
-      {/* HEADER DE RECHERCHE */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8 pt-4">
+      {/* HEADER & SEARCH */}
+      <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 pt-2">
         <div>
-          <h1 className="text-3xl font-display font-bold text-gray-900 dark:text-white flex items-center gap-3">
-            <Activity className="text-brand-gold" /> Market Watch
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <span className="p-2 bg-brand-gold/10 rounded-lg text-brand-gold"><Activity size={24} /></span>
+            Market Terminal
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">Analyse technique des cours en temps réel.</p>
         </div>
 
-        <form onSubmit={handleSearch} className="relative w-full md:w-96">
+        <form onSubmit={handleSearch} className="relative w-full md:w-80 group">
           <input
             type="text"
             value={inputTicker}
             onChange={(e) => setInputTicker(e.target.value)}
-            placeholder="Rechercher (ex: TSLA, BTC-USD...)"
-            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-[#121212] border border-gray-200 dark:border-white/10 rounded-xl focus:outline-none focus:border-brand-gold font-bold uppercase transition-all shadow-sm"
+            placeholder="Rechercher (ex: BTC-USD)..."
+            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/5 rounded-xl focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold font-bold uppercase transition-all shadow-sm group-hover:shadow-md text-sm"
           />
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-gold transition-colors" size={18} />
         </form>
       </div>
 
-      {/* ZONE PRINCIPALE */}
-      {data && (
-        <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden p-6 md:p-8">
-          
-          {/* EN-TÊTE DU GRAPHIQUE */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8 pb-6 border-b border-gray-100 dark:border-white/5">
-            <div>
-              <div className="flex items-baseline gap-4">
-                <h2 className="text-4xl md:text-6xl font-display font-bold text-gray-900 dark:text-white">{data.ticker}</h2>
-                <span className="text-xl text-gray-400 font-medium">{data.name}</span>
-              </div>
-              <div className="flex items-center gap-4 mt-2">
-                <span className="text-3xl font-mono font-bold text-gray-800 dark:text-gray-200">
-                  {data.current_price?.toLocaleString()} <span className="text-sm">{data.currency}</span>
-                </span>
-                <span className={`px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1 ${isPositive ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20' : 'bg-red-50 text-red-600 dark:bg-red-900/20'}`}>
-                  {isPositive ? <TrendingUp size={16}/> : <TrendingDown size={16}/>}
-                  {data.change_p > 0 ? '+' : ''}{data.change_p}%
-                </span>
-              </div>
-            </div>
+      {/* --- MAIN CARD --- */}
+      <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/5 rounded-3xl shadow-2xl overflow-hidden relative min-h-[550px] flex flex-col">
+        
+        {/* LOADING SKELETON */}
+        {loading && (
+           <div className="absolute inset-0 z-20 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-sm flex flex-col items-center justify-center">
+             <RefreshCw className="animate-spin text-brand-gold mb-4" size={32} />
+             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 animate-pulse">Synchronisation...</p>
+           </div>
+        )}
 
-            {/* SÉLECTEUR DE PÉRIODE */}
-            <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-xl">
-              {periods.map((p) => (
-                <button
-                  key={p.val}
-                  onClick={() => setPeriod(p.val)}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${period === p.val ? 'bg-white dark:bg-gray-800 text-brand-dark shadow-sm scale-105' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* LE GRAPHIQUE (CHART) */}
-          <div className="h-[400px] w-full relative">
-            {loading && (
-               <div className="absolute inset-0 bg-white/50 dark:bg-black/50 z-10 flex items-center justify-center backdrop-blur-sm">
-                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-brand-gold border-t-transparent"></div>
-               </div>
-            )}
+        {data ? (
+          <div className="p-6 md:p-8 flex flex-col h-full">
             
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.history}>
-                <defs>
-                  <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={mainColor} stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor={mainColor} stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                <XAxis 
-                  dataKey="date" 
-                  hide={true} 
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis 
-                  domain={['auto', 'auto']} 
-                  orientation="right" 
-                  tick={{fill: '#9ca3af', fontSize: 10}} 
-                  axisLine={false}
-                  tickLine={false}
-                  width={40}
-                />
-                <Tooltip 
-                  contentStyle={{backgroundColor: '#1a1a1a', border: 'none', borderRadius: '12px', color: '#fff'}}
-                  itemStyle={{color: '#fff'}}
-                  labelStyle={{color: '#9ca3af', marginBottom: '5px'}}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="price" 
-                  stroke={mainColor} 
-                  strokeWidth={3}
-                  fillOpacity={1} 
-                  fill={`url(#${gradientId})`} 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+            {/* 1. TICKER INFO ROW */}
+            <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                   <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-gray-100 dark:bg-white/5 text-gray-500 uppercase tracking-wider border border-gray-200 dark:border-white/5">
+                      ASSET
+                   </span>
+                   <h2 className="text-sm font-medium text-gray-400">{data.name}</h2>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <h1 className="text-5xl md:text-6xl font-display font-bold text-gray-900 dark:text-white tracking-tighter">
+                    {data.ticker}
+                  </h1>
+                  <div className="flex flex-col">
+                      <span className="text-3xl font-mono font-bold text-gray-800 dark:text-gray-100 leading-none">
+                        {data.current_price?.toLocaleString()}
+                      </span>
+                      <div className={`flex items-center gap-1 text-sm font-bold mt-1 ${isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
+                        {isPositive ? <ArrowUpRight size={16}/> : <ArrowDownRight size={16}/>}
+                        {data.change_p > 0 ? '+' : ''}{data.change_p}%
+                      </div>
+                  </div>
+                </div>
+              </div>
 
-          {/* GRAPHIQUE VOLUME (Miniature en dessous) */}
-          <div className="h-[100px] w-full mt-4 border-t border-gray-100 dark:border-white/5 pt-4">
-             <p className="text-[10px] uppercase font-bold text-gray-400 mb-2">Volumes</p>
-             <ResponsiveContainer width="100%" height="100%">
-               <BarChart data={data.history}>
-                 <Bar dataKey="volume" fill={mainColor} opacity={0.3} radius={[2, 2, 0, 0]} />
-               </BarChart>
-             </ResponsiveContainer>
-          </div>
-        </div>
-      )}
+              {/* IOS STYLE PERIOD SELECTOR */}
+              <div className="flex p-1 bg-gray-100 dark:bg-black/40 rounded-lg border border-gray-200 dark:border-white/5">
+                {periods.map((p) => (
+                  <button
+                    key={p.val}
+                    onClick={() => setPeriod(p.val)}
+                    className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all duration-300 ${period === p.val ? 'bg-white dark:bg-[#1a1a1a] text-brand-dark dark:text-white shadow-sm border border-gray-100 dark:border-white/10' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-      {/* STATS RAPIDES EN BAS */}
+            {/* 2. ADVANCED CHART */}
+            <div className="flex-1 w-full relative min-h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data.history} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={mainColor} stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor={mainColor} stopOpacity={0}/>
+                    </linearGradient>
+                    {/* Filtre pour l'effet Glow/Néon sous la ligne */}
+                    <filter id={glowId} height="300%" width="300%" x="-75%" y="-75%">
+                        <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+                        <feOffset dx="0" dy="0" result="offsetblur"/>
+                        <feFlood floodColor={mainColor} floodOpacity="0.5"/>
+                        <feComposite in2="offsetblur" operator="in"/>
+                        <feMerge>
+                            <feMergeNode/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                  </defs>
+                  
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" strokeOpacity={0.05} />
+                  
+                  <XAxis dataKey="date" hide={true} />
+                  <YAxis 
+                    domain={['auto', 'auto']} 
+                    orientation="right" 
+                    tick={{fill: '#9ca3af', fontSize: 10, fontFamily: 'monospace'}} 
+                    axisLine={false}
+                    tickLine={false}
+                    width={40}
+                  />
+                  
+                  <Tooltip content={<CustomTooltip currency={data.currency} />} cursor={{ stroke: '#6b7280', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                  
+                  <Area 
+                    type="monotone" 
+                    dataKey="price" 
+                    stroke={mainColor} 
+                    strokeWidth={2}
+                    filter={`url(#${glowId})`}
+                    fillOpacity={1} 
+                    fill={`url(#${gradientId})`} 
+                    animationDuration={1000}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* 3. VOLUME BAR (Miniature) */}
+            <div className="h-[40px] w-full mt-2 opacity-30">
+               <ResponsiveContainer width="100%" height="100%">
+                 <BarChart data={data.history}>
+                   <Bar dataKey="volume" fill={mainColor} radius={[2, 2, 0, 0]} />
+                 </BarChart>
+               </ResponsiveContainer>
+            </div>
+
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-gray-400">
+             <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-full mb-4 animate-pulse">
+                <Activity size={32} className="text-gray-300 dark:text-white/20" />
+             </div>
+             <p className="text-sm font-medium">Entrez un ticker pour lancer l'analyse.</p>
+          </div>
+        )}
+      </div>
+
+      {/* --- STATS FOOTER --- */}
       {data && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-           <StatCard icon={<Clock size={16}/>} label="Ouverture" value={data.history[data.history.length-1].open} />
-           <StatCard icon={<TrendingUp size={16}/>} label="Plus Haut" value={data.history[data.history.length-1].high} />
-           <StatCard icon={<TrendingDown size={16}/>} label="Plus Bas" value={data.history[data.history.length-1].low} />
-           <StatCard icon={<BarChart2 size={16}/>} label="Volume" value={(data.history[data.history.length-1].volume / 1000000).toFixed(2) + ' M'} />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+           <StatCard label="Ouverture" value={data.history[data.history.length-1].open} icon={<Clock size={14}/>} />
+           <StatCard label="Plus Haut" value={data.history[data.history.length-1].high} icon={<TrendingUp size={14}/>} color="text-emerald-500" />
+           <StatCard label="Plus Bas" value={data.history[data.history.length-1].low} icon={<TrendingDown size={14}/>} color="text-rose-500" />
+           <StatCard label="Volume" value={(data.history[data.history.length-1].volume / 1000000).toFixed(2) + ' M'} icon={<BarChart2 size={14}/>} />
         </div>
       )}
-
     </div>
   );
 }
 
-function StatCard({ icon, label, value }) {
+// --- HUD TOOLTIP (Design Futuriste) ---
+const CustomTooltip = ({ active, payload, label, currency }) => {
+  if (active && payload && payload.length) {
     return (
-        <div className="bg-white dark:bg-[#121212] p-4 rounded-2xl border border-gray-100 dark:border-white/10 flex items-center gap-4">
-            <div className="p-3 rounded-full bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400">
-                {icon}
-            </div>
+      <div className="bg-white/90 dark:bg-[#000000]/80 backdrop-blur-md border border-gray-100 dark:border-white/10 p-3 rounded-xl shadow-xl text-gray-900 dark:text-white min-w-[140px]">
+        <p className="text-[9px] uppercase font-bold text-gray-400 mb-1">{label}</p>
+        <p className="text-xl font-mono font-bold tracking-tight">
+          {payload[0].value.toFixed(2)} <span className="text-[10px] text-gray-400">$</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+function StatCard({ icon, label, value, color = "text-gray-900 dark:text-white" }) {
+    return (
+        <div className="bg-white dark:bg-[#121212] p-4 rounded-xl border border-gray-100 dark:border-white/5 flex items-center justify-between shadow-sm">
             <div>
-                <p className="text-[10px] uppercase font-bold text-gray-400">{label}</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">{value}</p>
+                <p className="text-[9px] uppercase font-bold text-gray-400 mb-0.5">{label}</p>
+                <p className={`text-base font-mono font-bold ${color}`}>{value}</p>
             </div>
+            <div className="text-gray-300 dark:text-gray-600">{icon}</div>
         </div>
     );
 }
