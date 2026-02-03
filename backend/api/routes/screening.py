@@ -59,6 +59,7 @@ def analyze_ticker():
             "ticker": ticker_input,
             "name": info.get('longName', ticker_input),
             "price": info.get('currentPrice', info.get('regularMarketPrice', 0)),
+            "change_p": round((info.get('regularMarketChangePercent') or 0) * 100, 2), # AJOUT ICI
             "sector": info.get('sector', 'N/A'),
             "industry": info.get('industry', 'N/A'),
             "ratios": {

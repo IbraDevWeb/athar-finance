@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Search, ArrowRight, X, TrendingUp, AlertTriangle, 
+  Search, ArrowRight, X, TrendingUp, TrendingDown, AlertTriangle, 
   CheckCircle, Activity, DollarSign, BarChart3, ShieldCheck, FileText, Info 
 } from 'lucide-react';
 
@@ -252,9 +252,24 @@ export default function ScreenerModule({ autoSearch }) {
                     <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white mb-1">
                         {result.name || result.ticker}
                     </h2>
-                    <p className="text-2xl font-mono font-bold text-brand-gold">
-                        {result.price?.toLocaleString()} <span className="text-sm text-gray-400">$</span>
-                    </p>
+                    
+                    {/* --- PRIX & ÉVOLUTION (MODIFIÉ) --- */}
+                    <div className="flex items-center gap-4 mt-2">
+                        <p className="text-3xl font-mono font-bold text-brand-gold">
+                            {result.price?.toLocaleString()} <span className="text-sm text-gray-400">$</span>
+                        </p>
+                        
+                        {result.change_p !== undefined && (
+                            <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold border ${
+                                result.change_p >= 0 
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800' 
+                                : 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800'
+                            }`}>
+                                {result.change_p >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                                <span>{result.change_p > 0 ? '+' : ''}{result.change_p}%</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* VERDICT */}
@@ -342,7 +357,6 @@ export default function ScreenerModule({ autoSearch }) {
                             <DollarSign size={16} /> Fondamentaux
                         </h3>
                         <div className="grid grid-cols-2 gap-4">
-                           {/* MODIFICATION ICI: Ajout des tooltips */}
                            <MetricBox 
                                 label="PER (Price Earning)" 
                                 value={result.technicals?.per || "N/A"} 
@@ -415,7 +429,6 @@ function GaugeCard({ label, value, limit, isGood }) {
     );
 }
 
-// MODIFICATION ICI : Ajout du support tooltip
 function MetricBox({ label, value, isGood, tooltip }) {
     let valueColor = "text-gray-800 dark:text-white"; 
     if (isGood === true) valueColor = "text-emerald-500";
@@ -430,7 +443,6 @@ function MetricBox({ label, value, isGood, tooltip }) {
                         <Info size={10} className="text-gray-400 cursor-help hover:text-brand-gold transition-colors" />
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-40 p-2 bg-gray-900 text-white text-[10px] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50 text-center leading-tight">
                             {tooltip}
-                            {/* Petite flèche en CSS */}
                             <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                         </div>
                     </>
