@@ -13,8 +13,9 @@ import Watchlist from "./modules/WatchlistModule";
 import Comparator from "./modules/ComparatorModule";
 import NewsModule from "./modules/NewsModule";
 import House from "./modules/HouseModule";
-// [NOUVEAU] Import du module ETF
 import EtfXray from "./modules/EtfXrayModule";
+// Import du nouveau module Graphique
+import ChartModule from './modules/ChartModule';
 
 function App() {
   // États de navigation
@@ -122,8 +123,9 @@ function App() {
                   {currentPage === 'portfolio' && 'Portefeuille'}
                   {currentPage === 'academy' && 'Académie'}
                   {currentPage === 'house' && 'Immobilier vs Bourse'}
-                  {/* [NOUVEAU] Titre ETF */}
                   {currentPage === 'etf' && 'Scanner ETF'}
+                  {/* AJOUT DU TITRE POUR CHART */}
+                  {currentPage === 'chart' && 'Market Watch'}
                 </h2>
                 <p className="text-gray-500 dark:text-gray-400 text-sm font-light pl-5">
                     Gérez vos actifs avec précision et éthique.
@@ -156,9 +158,10 @@ function App() {
             {currentPage === 'academy' && <Academy />}
             {currentPage === 'watchlist' && <Watchlist onAnalyze={handleWatchlistAnalyze} />}
             {currentPage === 'house' && <House />}
-            
-            {/* [NOUVEAU] Affichage du module ETF */}
             {currentPage === 'etf' && <EtfXray />}
+            
+            {/* AJOUT DU MODULE CHART ICI */}
+            {currentPage === 'chart' && <ChartModule />}
           </div>
 
           <footer className="mt-20 py-8 text-center border-t border-gray-200 dark:border-white/5">

@@ -7,6 +7,7 @@ from api.routes.screening import screening_bp
 from api.routes.news import news_bp
 # [NOUVEAU] Importation du module de prix en direct
 from api.routes.market import market_bp
+from api.routes.charting import charting_bp
 
 def create_app():
     app = Flask(__name__)
@@ -18,6 +19,7 @@ def create_app():
     # --- ENREGISTREMENT DES BLUEPRINTS ---
     # Chaque module a son propre préfixe pour éviter les conflits
     app.register_blueprint(screening_bp, url_prefix='/api/screening')
+    app.register_blueprint(charting_bp, url_prefix='/api/chart')
     app.register_blueprint(news_bp, url_prefix='/api/news')
     # [NOUVEAU] Route pour le "Marché en Direct" de l'accueil
     app.register_blueprint(market_bp, url_prefix='/api/market')

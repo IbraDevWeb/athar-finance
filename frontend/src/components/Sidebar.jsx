@@ -1,8 +1,8 @@
 import React from 'react';
-// [NOUVEAU] Ajout de l'icône Layers pour l'ETF
+// [NOUVEAU] Ajout de l'icône Activity pour le Market Watch
 import { 
   LayoutDashboard, Search, Wallet, BookOpen, 
-  Scale, TrendingUp, Heart, Calculator, User, Home, Layers 
+  Scale, TrendingUp, Heart, Calculator, User, Home, Layers, Activity 
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onNavigate, isMobile, closeMobileMenu }) {
@@ -60,8 +60,9 @@ export default function Sidebar({ activeTab, onNavigate, isMobile, closeMobileMe
 
         <MenuSection label="Marchés" />
         <NavItem id="screener" icon={Search} label="Screener Pro" />
-        {/* [NOUVEAU] Bouton ETF X-Ray */}
         <NavItem id="etf" icon={Layers} label="ETF X-Ray" />
+        {/* [NOUVEAU] Market Watch ajouté ici sans casser le reste */}
+        <NavItem id="chart" icon={Activity} label="Market Watch" />
         <NavItem id="comparator" icon={Scale} label="Comparateur Actions" />
 
         <MenuSection label="Patrimoine" />
@@ -74,7 +75,7 @@ export default function Sidebar({ activeTab, onNavigate, isMobile, closeMobileMe
         <NavItem id="academy" icon={BookOpen} label="Académie" />
       </nav>
 
-      {/* FOOTER */}
+      {/* FOOTER (Identique à ton ancien fichier) */}
       <div className="p-4 border-t border-gray-100 dark:border-white/5 mx-4 mb-4">
         <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 cursor-pointer hover:border-brand-gold/30 transition-colors">
             <div className="w-8 h-8 rounded-full bg-white dark:bg-white/10 flex items-center justify-center text-xs text-brand-gold font-bold shadow-sm">
