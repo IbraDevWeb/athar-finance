@@ -1,11 +1,8 @@
 from flask import Blueprint, request, jsonify
 import yfinance as yf
 import pandas as pd
-# On a retiré les imports de cache
 
 screening_bp = Blueprint('screening', __name__)
-
-# Plus de configuration de session ici.
 
 def sanitize_value(val, default=0, is_percent=False):
     """Nettoie et arrondit les valeurs financières."""
@@ -29,7 +26,7 @@ def analyze_ticker():
         return jsonify({"error": "Ticker manquant"}), 400
 
     try:
-        # RETRAIT DU CACHE ICI : On appelle yf.Ticker directement
+        # Récupération des données Yahoo Finance
         stock = yf.Ticker(ticker_input)
         info = stock.info
         
@@ -55,11 +52,19 @@ def analyze_ticker():
         
         is_halal = len(found_keywords) == 0 and debt_ratio < 33 and cash_ratio < 33
 
+        # --- CORRECTION INTELLIGENTE DU POURCENTAGE ---
+        # Yahoo renvoie parfois 0.02 (pour 2%) et parfois 2.0 (pour 2%).
+        raw_change = info.get('regularMarketChangePercent') or 0
+        
+        # Si la valeur absolue est inférieure à 0.5 (donc < 50%), on suppose que c'est un format décimal (ex: 0.02)
+        # Sinon, c'est déjà un pourcentage (ex: -2.08)
+        change_p = round(raw_change * 100, 2) if abs(raw_change) < 0.5 else round(raw_change, 2)
+
         result = {
             "ticker": ticker_input,
             "name": info.get('longName', ticker_input),
             "price": info.get('currentPrice', info.get('regularMarketPrice', 0)),
-            "change_p": round((info.get('regularMarketChangePercent') or 0), 2), # AJOUT ICI
+            "change_p": change_p, # Pourcentage corrigé
             "sector": info.get('sector', 'N/A'),
             "industry": info.get('industry', 'N/A'),
             "ratios": {
@@ -97,7 +102,6 @@ def scan_etf():
         return jsonify({"error": "Ticker manquant"}), 400
 
     try:
-        # RETRAIT DU CACHE ICI AUSSI
         etf = yf.Ticker(ticker_input)
         info = etf.info
         
