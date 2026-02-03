@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Menu, X, Sun, Moon } from 'lucide-react'; 
 import Sidebar from './components/Sidebar';
 
@@ -14,16 +14,15 @@ import Comparator from "./modules/ComparatorModule";
 import NewsModule from "./modules/NewsModule";
 import House from "./modules/HouseModule";
 import EtfXray from "./modules/EtfXrayModule";
-// Import du nouveau module Graphique
 import ChartModule from './modules/ChartModule';
+// NOUVEL IMPORT
+import LifestyleModule from './modules/LifestyleModule';
 
 function App() {
-  // États de navigation
   const [currentPage, setCurrentPage] = useState('home');
   const [screenerTicker, setScreenerTicker] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // États du Thème (Dark Mode)
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   const toggleTheme = () => {
@@ -48,7 +47,7 @@ function App() {
   return (
     <div className="flex h-screen overflow-hidden font-sans bg-[#f8f9fa] dark:bg-[#050505] transition-colors duration-300 text-gray-900 dark:text-white">
       
-      {/* --- HEADER MOBILE --- */}
+      {/* HEADER MOBILE */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-[#050505] border-b border-gray-200 dark:border-white/10 p-4 flex justify-between items-center transition-colors">
         <div className="flex items-center gap-3">
              <div className="w-8 h-8 rounded bg-gradient-to-br from-brand-gold to-yellow-600 flex items-center justify-center text-white shadow-lg">
@@ -58,59 +57,32 @@ function App() {
         </div>
         
         <div className="flex gap-2">
-            <button 
-                onClick={toggleTheme} 
-                className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-            >
+            <button onClick={toggleTheme} className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors">
                 {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <button 
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-                className="p-2 text-brand-gold bg-brand-gold/10 rounded-lg hover:bg-brand-gold/20 transition-colors"
-            >
+            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-brand-gold bg-brand-gold/10 rounded-lg hover:bg-brand-gold/20 transition-colors">
                 {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
         </div>
       </div>
 
-      {/* --- SIDEBAR --- */}
-      <aside className={`
-          fixed inset-y-0 left-0 z-40 w-72 
-          bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-white/5 
-          transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]
-          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
-          lg:relative lg:translate-x-0
-      `}>
-        <Sidebar 
-            activeTab={currentPage} 
-            onNavigate={handleNavigate} 
-            isMobile={true} 
-            closeMobileMenu={() => setIsMobileMenuOpen(false)} 
-        />
+      {/* SIDEBAR */}
+      <aside className={`fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-white/5 transition-transform duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0`}>
+        <Sidebar activeTab={currentPage} onNavigate={handleNavigate} isMobile={true} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
       </aside>
 
-      {isMobileMenuOpen && (
-        <div 
-            onClick={() => setIsMobileMenuOpen(false)} 
-            className="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm"
-        ></div>
-      )}
+      {isMobileMenuOpen && <div onClick={() => setIsMobileMenuOpen(false)} className="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm"></div>}
 
-      {/* --- CONTENU PRINCIPAL --- */}
+      {/* CONTENU PRINCIPAL */}
       <main className="flex-1 overflow-y-auto relative w-full pt-20 lg:pt-0 scroll-smooth">
         <div className="max-w-7xl mx-auto p-4 lg:p-10 min-h-screen">
           
-          {/* Header Desktop */}
           <div className="hidden lg:flex justify-end mb-6">
-             <button 
-                onClick={toggleTheme} 
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:border-brand-gold hover:text-brand-gold transition-all shadow-sm"
-             >
+             <button onClick={toggleTheme} className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:border-brand-gold hover:text-brand-gold transition-all shadow-sm">
                 {isDarkMode ? <><Sun size={14} /> Mode Jour</> : <><Moon size={14} /> Mode Nuit</>}
              </button>
           </div>
 
-          {/* Titre de la Page */}
           {currentPage !== 'home' && (
              <header className="mb-8 animate-fade-in border-b border-gray-200 dark:border-white/10 pb-6">
                 <h2 className="text-3xl font-display font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
@@ -124,16 +96,14 @@ function App() {
                   {currentPage === 'academy' && 'Académie'}
                   {currentPage === 'house' && 'Immobilier vs Bourse'}
                   {currentPage === 'etf' && 'Scanner ETF'}
-                  {/* AJOUT DU TITRE POUR CHART */}
                   {currentPage === 'chart' && 'Market Watch'}
+                  {/* TITRE LIFESTYLE */}
+                  {currentPage === 'lifestyle' && 'Lifestyle Converter'}
                 </h2>
-                <p className="text-gray-500 dark:text-gray-400 text-sm font-light pl-5">
-                    Gérez vos actifs avec précision et éthique.
-                </p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm font-light pl-5">Gérez vos actifs avec précision et éthique.</p>
              </header>
           )}
 
-          {/* Affichage des Modules */}
           <div className="animate-fade-in">
             {currentPage === 'home' && <Home onNavigate={handleNavigate} />}
             
@@ -142,10 +112,7 @@ function App() {
                     <Screener autoSearch={screenerTicker} />
                     <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-white/10 to-transparent opacity-50"></div>
                     <section>
-                        <div className="text-center mb-8">
-                            <h3 className="text-xl font-bold opacity-80 dark:text-white">Contexte de Marché</h3>
-                            <p className="text-sm opacity-50 dark:text-gray-400">Comprendre pourquoi ça bouge</p>
-                        </div>
+                        <div className="text-center mb-8"><h3 className="text-xl font-bold opacity-80 dark:text-white">Contexte de Marché</h3><p className="text-sm opacity-50 dark:text-gray-400">Comprendre pourquoi ça bouge</p></div>
                         <NewsModule />
                     </section>
                 </div>
@@ -159,15 +126,14 @@ function App() {
             {currentPage === 'watchlist' && <Watchlist onAnalyze={handleWatchlistAnalyze} />}
             {currentPage === 'house' && <House />}
             {currentPage === 'etf' && <EtfXray />}
-            
-            {/* AJOUT DU MODULE CHART ICI */}
             {currentPage === 'chart' && <ChartModule />}
+            
+            {/* AFFICHAGE MODULE LIFESTYLE */}
+            {currentPage === 'lifestyle' && <LifestyleModule />}
           </div>
 
           <footer className="mt-20 py-8 text-center border-t border-gray-200 dark:border-white/5">
-             <p className="text-gray-400 text-[10px] uppercase tracking-widest hover:text-brand-gold transition-colors">
-               Athar Private Finance • v2.4
-             </p>
+             <p className="text-gray-400 text-[10px] uppercase tracking-widest hover:text-brand-gold transition-colors">Athar Private Finance • v2.5</p>
           </footer>
         </div>
       </main>

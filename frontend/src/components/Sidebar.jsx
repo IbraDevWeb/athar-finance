@@ -1,8 +1,7 @@
 import React from 'react';
-// [NOUVEAU] Ajout de l'icône Activity pour le Market Watch
 import { 
   LayoutDashboard, Search, Wallet, BookOpen, 
-  Scale, TrendingUp, Heart, Calculator, User, Home, Layers, Activity 
+  Scale, TrendingUp, Heart, Calculator, User, Home, Layers, Activity, Crown 
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onNavigate, isMobile, closeMobileMenu }) {
@@ -60,22 +59,24 @@ export default function Sidebar({ activeTab, onNavigate, isMobile, closeMobileMe
 
         <MenuSection label="Marchés" />
         <NavItem id="screener" icon={Search} label="Screener Pro" />
-        <NavItem id="etf" icon={Layers} label="ETF X-Ray" />
-        {/* [NOUVEAU] Market Watch ajouté ici sans casser le reste */}
         <NavItem id="chart" icon={Activity} label="Market Watch" />
+        <NavItem id="etf" icon={Layers} label="ETF X-Ray" />
         <NavItem id="comparator" icon={Scale} label="Comparateur Actions" />
+
+        <MenuSection label="Outils Lifestyle" />
+        {/* NOUVEAU MODULE LIFESTYLE */}
+        <NavItem id="lifestyle" icon={Crown} label="Lifestyle Converter" />
+        <NavItem id="house" icon={Home} label="Acheter vs Louer" />
+        <NavItem id="simulator" icon={TrendingUp} label="Intérêts Composés" />
 
         <MenuSection label="Patrimoine" />
         <NavItem id="portfolio" icon={Wallet} label="Mon Portefeuille" />
-        <NavItem id="simulator" icon={TrendingUp} label="Projections" />
-        <NavItem id="house" icon={Home} label="Acheter vs Louer" />
         <NavItem id="zakat" icon={Calculator} label="Zakat & Purif." />
 
         <MenuSection label="Savoir" />
         <NavItem id="academy" icon={BookOpen} label="Académie" />
       </nav>
 
-      {/* FOOTER (Identique à ton ancien fichier) */}
       <div className="p-4 border-t border-gray-100 dark:border-white/5 mx-4 mb-4">
         <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 cursor-pointer hover:border-brand-gold/30 transition-colors">
             <div className="w-8 h-8 rounded-full bg-white dark:bg-white/10 flex items-center justify-center text-xs text-brand-gold font-bold shadow-sm">
