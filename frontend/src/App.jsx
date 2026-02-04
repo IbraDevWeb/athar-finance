@@ -15,8 +15,9 @@ import NewsModule from "./modules/NewsModule";
 import House from "./modules/HouseModule";
 import EtfXray from "./modules/EtfXrayModule";
 import ChartModule from './modules/ChartModule';
-// NOUVEL IMPORT
 import LifestyleModule from './modules/LifestyleModule';
+// NOUVEL IMPORT
+import IhsanModule from './modules/IhsanModule';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -97,8 +98,9 @@ function App() {
                   {currentPage === 'house' && 'Immobilier vs Bourse'}
                   {currentPage === 'etf' && 'Scanner ETF'}
                   {currentPage === 'chart' && 'Market Watch'}
-                  {/* TITRE LIFESTYLE */}
                   {currentPage === 'lifestyle' && 'Lifestyle Converter'}
+                  {/* TITRE IHSAN */}
+                  {currentPage === 'ihsan' && 'Science & Ihsan'}
                 </h2>
                 <p className="text-gray-500 dark:text-gray-400 text-sm font-light pl-5">Gérez vos actifs avec précision et éthique.</p>
              </header>
@@ -127,13 +129,14 @@ function App() {
             {currentPage === 'house' && <House />}
             {currentPage === 'etf' && <EtfXray />}
             {currentPage === 'chart' && <ChartModule />}
-            
-            {/* AFFICHAGE MODULE LIFESTYLE */}
             {currentPage === 'lifestyle' && <LifestyleModule />}
+            
+            {/* AFFICHAGE MODULE IHSAN */}
+            {currentPage === 'ihsan' && <IhsanModule />}
           </div>
 
           <footer className="mt-20 py-8 text-center border-t border-gray-200 dark:border-white/5">
-             <p className="text-gray-400 text-[10px] uppercase tracking-widest hover:text-brand-gold transition-colors">Athar Private Finance • v2.5</p>
+             <p className="text-gray-400 text-[10px] uppercase tracking-widest hover:text-brand-gold transition-colors">Athar Private Finance • v2.6</p>
           </footer>
         </div>
       </main>

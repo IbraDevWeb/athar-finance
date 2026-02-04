@@ -1,7 +1,8 @@
 import React from 'react';
 import { 
   LayoutDashboard, Search, Wallet, BookOpen, 
-  Scale, TrendingUp, Heart, Calculator, User, Home, Layers, Activity, Crown 
+  Scale, TrendingUp, Heart, Calculator, User, Home, Layers, Activity, Crown, 
+  Sparkles // <--- AJOUT ICÔNE POUR IHSAN
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, onNavigate, isMobile, closeMobileMenu }) {
@@ -64,7 +65,6 @@ export default function Sidebar({ activeTab, onNavigate, isMobile, closeMobileMe
         <NavItem id="comparator" icon={Scale} label="Comparateur Actions" />
 
         <MenuSection label="Outils Lifestyle" />
-        {/* NOUVEAU MODULE LIFESTYLE */}
         <NavItem id="lifestyle" icon={Crown} label="Lifestyle Converter" />
         <NavItem id="house" icon={Home} label="Acheter vs Louer" />
         <NavItem id="simulator" icon={TrendingUp} label="Intérêts Composés" />
@@ -75,6 +75,8 @@ export default function Sidebar({ activeTab, onNavigate, isMobile, closeMobileMe
 
         <MenuSection label="Savoir" />
         <NavItem id="academy" icon={BookOpen} label="Académie" />
+        {/* AJOUT DU MODULE IHSAN ICI */}
+        <NavItem id="ihsan" icon={Sparkles} label="Science & Ihsan" />
       </nav>
 
       <div className="p-4 border-t border-gray-100 dark:border-white/5 mx-4 mb-4">
