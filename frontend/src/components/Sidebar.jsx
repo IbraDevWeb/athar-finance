@@ -76,7 +76,7 @@ export default function Sidebar({ activeTab, onNavigate, isMobile, closeMobileMe
         <MenuSection label="Savoir" />
         <NavItem id="academy" icon={BookOpen} label="Académie" />
         {/* AJOUT DU MODULE IHSAN ICI */}
-        <NavItem id="ihsan" icon={Sparkles} label="Science & Ihsan" />
+        <NavItem id="ihsan-data" icon={Sparkles} label="Jardin des Vertueux" />
       </nav>
 
       <div className="p-4 border-t border-gray-100 dark:border-white/5 mx-4 mb-4">

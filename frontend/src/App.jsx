@@ -17,7 +17,7 @@ import EtfXray from "./modules/EtfXrayModule";
 import ChartModule from './modules/ChartModule';
 import LifestyleModule from './modules/LifestyleModule';
 // NOUVEL IMPORT
-import IhsanModule from './modules/IhsanModule';
+import IhsanDataModule from './modules/IhsanDataModule';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -100,7 +100,7 @@ function App() {
                   {currentPage === 'chart' && 'Market Watch'}
                   {currentPage === 'lifestyle' && 'Lifestyle Converter'}
                   {/* TITRE IHSAN */}
-                  {currentPage === 'ihsan' && 'Science & Ihsan'}
+                  {currentPage === 'ihsan-data' && 'Jardin des Vertueux'}
                 </h2>
                 <p className="text-gray-500 dark:text-gray-400 text-sm font-light pl-5">Gérez vos actifs avec précision et éthique.</p>
              </header>
@@ -132,7 +132,7 @@ function App() {
             {currentPage === 'lifestyle' && <LifestyleModule />}
             
             {/* AFFICHAGE MODULE IHSAN */}
-            {currentPage === 'ihsan' && <IhsanModule />}
+            {currentPage === 'ihsan-data' && <IhsanDataModule />}
           </div>
 
           <footer className="mt-20 py-8 text-center border-t border-gray-200 dark:border-white/5">
