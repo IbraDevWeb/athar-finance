@@ -1,158 +1,113 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
-  Quote, Search, Filter, BookOpen, Feather, 
-  Heart, Sparkles, MessageCircle, Moon 
+  Quote, Search, BookOpen, Feather, 
+  Heart, Sparkles, MessageCircle, Filter 
 } from 'lucide-react';
+
+// Import des données locales
+import { WISDOMS } from './ihsanData'; 
 
 export default function IhsanDataModule() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('Tout');
 
-  // --- BASE DE DONNÉES DES ATHARS ---
-  const WISDOMS = [
-    {
-      id: 1,
-      category: "Comportement (Adab)",
-      author: "Prophète Muhammad ﷺ",
-      source: "Al-Muwatta",
-      arabic: "إِنَّمَا بُعِثْتُ لأُتَمِّمَ مَكَارِمَ الأَخْلاقِ",
-      french: "Je n'ai été envoyé que pour parfaire les nobles comportements."
-    },
-    {
-      id: 2,
-      category: "Cœur (Qalb)",
-      author: "Hasan Al-Basri",
-      source: "Sagesse",
-      arabic: "لَيْسَ الْإِيمَانُ بِالتَّمَنِّي وَلَا بِالتَّحَلِّي، وَلَكِنْ هُوَ مَا وَقَرَ فِي الْقَلْبِ وَصَدَّقَهُ الْعَمَلُ",
-      french: "La foi ne consiste ni en vœux pieux ni en parures, mais c'est ce qui s'ancré dans le cœur et que les actes confirment."
-    },
-    {
-      id: 3,
-      category: "Relations (Mu'amalat)",
-      author: "Ibn Al-Qayyim",
-      source: "Madarij as-Salikin",
-      arabic: "الدين كله خلق، فمن زاد عليك في الخلق زاد عليك في الدين",
-      french: "La religion tout entière est bon comportement. Celui qui te surpasse en bon comportement te surpasse en religion."
-    },
-    {
-      id: 4,
-      category: "Langue (Lisan)",
-      author: "Umar ibn al-Khattab",
-      source: "Athar",
-      arabic: "مَنْ كَثُرَ كَلَامُهُ كَثُرَ سَقَطُهُ",
-      french: "Celui qui parle trop commet beaucoup d'erreurs, et celui qui commet beaucoup d'erreurs perd sa pudeur."
-    },
-    {
-      id: 5,
-      category: "Comportement (Adab)",
-      author: "Fudayl ibn Iyad",
-      source: "Sagesse",
-      arabic: "لأَنْ يَصْحَبَنِي فَاجِرٌ حَسَنُ الْخُلُقِ، أَحَبُّ إِلَيَّ مِنْ أَنْ يَصْحَبَنِي عَابِدٌ سَيِّئُ الْخُلُقِ",
-      french: "Je préfère la compagnie d'un pécheur au bon comportement à celle d'un dévot au mauvais caractère."
-    },
-    {
-      id: 6,
-      category: "Cœur (Qalb)",
-      author: "Ibn Rajab",
-      source: "Jami' al-Ulum",
-      arabic: "الذل للانكسار والعجز والافتقار هو روح العبودية ولبها",
-      french: "L'humilité, le brisement du cœur et le sentiment de pauvreté (envers Allah) sont l'âme et l'essence de la servitude."
-    },
-    {
-      id: 7,
-      category: "Douceur (Rifq)",
-      author: "Prophète Muhammad ﷺ",
-      source: "Sahih Muslim",
-      arabic: "إِنَّ الرِّفْقَ لاَ يَكُونُ فِي شَيْءٍ إِلاَّ زَانَهُ وَلاَ يُنْزَعُ مِنْ شَيْءٍ إِلاَّ شَانَهُ",
-      french: "La douceur n'est jamais présente dans une chose sans l'embellir, et elle n'est jamais retirée d'une chose sans l'enlaidir."
-    },
-    {
-      id: 8,
-      category: "Relations (Mu'amalat)",
-      author: "Sufyan Al-Thawri",
-      source: "Hilyat al-Awliya",
-      arabic: "إصلاح ما بينك وبين الله، يصلح الله ما بينك وبين الناس",
-      french: "Corrige ta relation avec Allah, et Allah corrigera ta relation avec les gens."
-    }
-  ];
+  // --- OPTIMISATION : Mémoïsation des données ---
+  // On ne recalcule les catégories que si les données changent (rare)
+  const categories = useMemo(() => {
+      return ['Tout', ...new Set(WISDOMS.map(w => w.category))];
+  }, []);
 
-  // Catégories uniques
-  const categories = ['Tout', ...new Set(WISDOMS.map(w => w.category))];
-
-  // Filtrage
-  const filtered = WISDOMS.filter(item => {
-    const matchesSearch = item.french.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          item.author.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = activeCategory === 'Tout' || item.category === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // On ne refiltre que si le terme de recherche ou la catégorie change
+  const filtered = useMemo(() => {
+      return WISDOMS.filter(item => {
+        const matchesSearch = item.french.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                              item.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              item.arabic.includes(searchTerm); // Ajout recherche en arabe
+        const matchesCategory = activeCategory === 'Tout' || item.category === activeCategory;
+        return matchesSearch && matchesCategory;
+      });
+  }, [searchTerm, activeCategory]);
 
   return (
-    <div className="max-w-5xl mx-auto pb-20 animate-fade-in space-y-10">
+    <div className="max-w-5xl mx-auto pb-20 animate-fade-in space-y-12">
       
-      {/* HEADER SPIRITUEL */}
-      <div className="text-center pt-8 space-y-4">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-gold/5 border border-brand-gold/20 text-brand-gold mb-2">
-            <Feather size={32} />
+      {/* --- HEADER SPIRITUEL --- */}
+      <div className="text-center pt-10 space-y-5 animate-fade-in-down">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-gold/5 border border-brand-gold/20 text-brand-gold shadow-sm">
+            <Feather size={32} strokeWidth={1.5} />
         </div>
-        <h1 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white">
+        <h1 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 dark:text-white tracking-tight">
            Le Jardin des <span className="text-brand-gold italic">Vertus</span>
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto font-serif italic text-lg">
+        <div className="w-16 h-px bg-brand-gold/30 mx-auto"></div>
+        <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto font-serif italic text-xl leading-relaxed">
            "La beauté de l'âme l'emporte sur toute autre beauté."
         </p>
       </div>
 
-      {/* BARRE DE RECHERCHE & FILTRES */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-6 sticky top-0 z-20 bg-[#f8f9fa]/80 dark:bg-[#050505]/80 backdrop-blur-md py-4 rounded-xl">
+      {/* --- BARRE DE CONTRÔLE STICKY PREMIUM --- */}
+      <div className="sticky top-4 z-30 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl border border-gray-100/50 dark:border-white/10 py-4 px-4 md:px-6 rounded-2xl shadow-sm transition-all duration-300">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           
-          {/* Filtres (Onglets) */}
-          <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto no-scrollbar">
-              {categories.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setActiveCategory(cat)}
-                    className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all border ${
-                        activeCategory === cat 
-                        ? 'bg-brand-gold text-white border-brand-gold' 
-                        : 'bg-white dark:bg-white/5 text-gray-400 border-gray-200 dark:border-white/10 hover:border-brand-gold'
-                    }`}
-                  >
-                      {cat}
-                  </button>
-              ))}
+          {/* Filtres (Onglets défilants) */}
+          <div className="flex gap-2 overflow-x-auto pb-1 w-full md:w-auto no-scrollbar mask-gradient-right">
+              {categories.map(cat => {
+                  const isActive = activeCategory === cat;
+                  return (
+                    <button
+                        key={cat}
+                        onClick={() => setActiveCategory(cat)}
+                        className={`whitespace-nowrap px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 border ${
+                            isActive 
+                            ? 'bg-brand-gold text-white border-brand-gold shadow-md shadow-brand-gold/20 scale-105' 
+                            : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-white/5 hover:border-brand-gold/50 hover:text-gray-700 dark:hover:text-gray-200'
+                        }`}
+                    >
+                        {cat}
+                    </button>
+                  );
+              })}
           </div>
 
           {/* Recherche */}
-          <div className="relative w-full md:w-64">
+          <div className="relative w-full md:w-72 group">
               <input 
                   type="text" 
-                  placeholder="Rechercher un terme..."
+                  placeholder="Rechercher un auteur, un mot..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-xl focus:outline-none focus:border-brand-gold text-sm"
+                  className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-[#121212] border border-gray-100 dark:border-white/5 rounded-xl focus:outline-none focus:border-brand-gold/50 focus:bg-white dark:focus:bg-black focus:ring-2 focus:ring-brand-gold/10 text-sm transition-all shadow-sm group-hover:border-gray-300 dark:group-hover:border-white/20"
               />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-gold transition-colors duration-300" size={18} />
           </div>
+        </div>
       </div>
 
-      {/* GRILLE DES CARTES */}
-      <div className="grid md:grid-cols-2 gap-6">
-          {filtered.map((item) => (
-              <WisdomCard key={item.id} data={item} />
+      {/* --- GRILLE DES CARTES --- */}
+      <div className="grid md:grid-cols-2 gap-8 items-start min-h-[400px]">
+          {filtered.map((item, index) => (
+              // Ajout d'un léger délai d'animation par carte pour un effet "cascade" fluide
+              <div key={item.id} className="animate-fade-in-up" style={{animationDelay: `${index * 50}ms`}}>
+                 <WisdomCard data={item} />
+              </div>
           ))}
           
+          {/* État Vide Amélioré */}
           {filtered.length === 0 && (
-              <div className="col-span-full text-center py-20 text-gray-400">
-                  <BookOpen size={48} className="mx-auto mb-4 opacity-20" />
-                  <p>Aucune sagesse trouvée pour cette recherche.</p>
+              <div className="col-span-full flex flex-col items-center justify-center py-24 text-gray-400 border-2 border-dashed border-gray-100 dark:border-white/5 rounded-[2rem]">
+                  <div className="p-6 bg-gray-50 dark:bg-white/5 rounded-full mb-4">
+                    <BookOpen size={48} className="opacity-30" strokeWidth={1} />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-600 dark:text-gray-300 mb-2">Aucun résultat trouvé</h3>
+                  <p className="text-sm text-gray-500">Essayez d'autres mots-clés ou changez de catégorie.</p>
               </div>
           )}
       </div>
 
-      <div className="text-center pt-10 border-t border-gray-200 dark:border-white/5">
-           <p className="text-xs text-gray-400 uppercase tracking-widest">
-               Compilé avec amour pour les gens doués d'intelligence.
+      {/* FOOTER DISCRET */}
+      <div className="text-center pt-12 border-t border-gray-100/50 dark:border-white/5">
+           <p className="text-[10px] font-bold text-gray-400/80 uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+               <Feather size={12} /> Compilé avec soin pour l'apaisement des cœurs
            </p>
       </div>
 
@@ -160,46 +115,63 @@ export default function IhsanDataModule() {
   );
 }
 
-// --- SOUS-COMPOSANT : CARTE DE SAGESSE ---
+// --- SOUS-COMPOSANT : CARTE DE SAGESSE PREMIUM ---
 function WisdomCard({ data }) {
+    // Détermination dynamique de l'icône et de la couleur
+    let Icon = Sparkles;
+    let colorClass = "text-brand-gold";
+    let bgClass = "bg-brand-gold/10";
+
+    if (data.category.includes('Cœur')) { Icon = Heart; colorClass = "text-rose-400"; bgClass = "bg-rose-400/10"; }
+    else if (data.category.includes('Langue')) { Icon = MessageCircle; colorClass = "text-blue-400"; bgClass = "bg-blue-400/10"; }
+    else if (data.category.includes('Relations')) { Icon = Filter; colorClass = "text-emerald-400"; bgClass = "bg-emerald-400/10"; }
+
     return (
-        <div className="group bg-white dark:bg-[#121212] p-8 rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500 relative overflow-hidden">
+        <div className="group bg-white dark:bg-[#121212] p-8 rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] dark:hover:shadow-none hover:-translate-y-1 transition-all duration-500 relative overflow-hidden h-full flex flex-col">
             
-            {/* Décoration Arabesque subtile */}
-            <div className="absolute top-0 right-0 p-6 opacity-5 text-brand-gold group-hover:opacity-10 transition-opacity">
-                <Quote size={64} />
+            {/* Décoration d'arrière-plan */}
+            <div className="absolute -top-10 -right-10 text-[10rem] opacity-[0.02] dark:opacity-[0.03] text-brand-gold pointer-events-none select-none font-serif transition-transform group-hover:scale-110 duration-700">
+                ”
+            </div>
+            <div className="absolute top-8 right-8 opacity-5 text-brand-gold group-hover:opacity-10 transition-opacity duration-500">
+                <Quote size={48} />
             </div>
 
-            {/* Catégorie */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-gray-50 dark:bg-white/5 text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-6">
-                {data.category === 'Cœur (Qalb)' && <Heart size={12} className="text-rose-400"/>}
-                {data.category === 'Comportement (Adab)' && <Sparkles size={12} className="text-brand-gold"/>}
-                {data.category === 'Langue (Lisan)' && <MessageCircle size={12} className="text-blue-400"/>}
-                {data.category === 'Relations (Mu\'amalat)' && <Filter size={12} className="text-emerald-400"/>}
+            {/* Badge Catégorie */}
+            <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full ${bgClass} text-[10px] font-bold uppercase tracking-widest ${colorClass} mb-8 w-fit`}>
+                <Icon size={12} strokeWidth={2.5} />
                 {data.category}
             </div>
 
-            {/* Texte Arabe */}
-            <h2 className="text-2xl md:text-3xl font-serif text-right text-gray-800 dark:text-gray-200 mb-6 leading-loose font-medium" dir="rtl">
-                {data.arabic}
-            </h2>
+            {/* Contenu Principal (Flexible pour aligner le bas) */}
+            <div className="flex-1 flex flex-col">
+                {/* Texte Arabe */}
+                <h2 className="text-3xl md:text-3xl font-serif text-right text-gray-800 dark:text-gray-100 mb-6 leading-[1.6] font-medium" dir="rtl">
+                    {data.arabic}
+                </h2>
 
-            {/* Séparateur */}
-            <div className="w-12 h-0.5 bg-brand-gold/30 mb-6"></div>
-
-            {/* Traduction */}
-            <p className="text-gray-600 dark:text-gray-400 font-serif italic text-lg leading-relaxed mb-6">
-                « {data.french} »
-            </p>
-
-            {/* Auteur & Source */}
-            <div className="flex justify-between items-end border-t border-gray-100 dark:border-white/5 pt-4">
-                <div>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white">{data.author}</p>
-                    <p className="text-xs text-brand-gold uppercase tracking-wider mt-0.5">{data.source}</p>
+                {/* Séparateur ornemental */}
+                <div className="flex items-center gap-2 mb-6 opacity-50">
+                    <div className="h-px w-12 bg-brand-gold/40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-brand-gold/60"></div>
                 </div>
-                <div className="text-gray-300 dark:text-gray-700 group-hover:text-brand-gold transition-colors">
-                    <Feather size={16} />
+
+                {/* Traduction */}
+                <p className="text-gray-600 dark:text-gray-300 font-serif italic text-lg leading-relaxed mb-8">
+                    « {data.french} »
+                </p>
+            </div>
+
+            {/* Footer de la carte (Auteur & Source) */}
+            <div className="flex justify-between items-end border-t border-gray-100 dark:border-white/5 pt-5 mt-auto">
+                <div>
+                    <p className="text-base font-bold text-gray-900 dark:text-white">{data.author}</p>
+                    <p className="text-xs font-medium text-brand-gold/80 uppercase tracking-wider mt-1 flex items-center gap-1">
+                        <BookOpen size={10} /> {data.source}
+                    </p>
+                </div>
+                <div className="text-gray-300 dark:text-gray-700 group-hover:text-brand-gold transition-colors duration-300 p-2 bg-gray-50 dark:bg-white/5 rounded-full group-hover:bg-brand-gold/10">
+                    <Feather size={18} strokeWidth={1.5} />
                 </div>
             </div>
         </div>
