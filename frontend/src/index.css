@@ -4,6 +4,29 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    /* Par défaut : Texte sombre sur fond clair / Texte clair sur fond sombre */
+    @apply text-gray-900 bg-[#f8f9fa] dark:bg-[#050505] dark:text-gray-100 transition-colors duration-300;
+  }
+
+  /* Règle universelle pour les titres (H1, H2, etc.) */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-gray-900 dark:text-white;
+  }
+
+  /* Règle universelle pour les inputs (souvent les coupables !) */
+  input, select, textarea {
+    @apply text-gray-900 bg-white border-gray-200 
+           dark:text-white dark:bg-[#1a1a1a] dark:border-white/10;
+  }
+  
+  /* Règle pour les placeholders (le texte "Rechercher...") */
+  input::placeholder {
+    @apply text-gray-400 dark:text-gray-500;
+  }
+}
+
 /* --- BASE --- */
 body {
   background-color: #f8f9fa; /* Gris très clair pour le jour (moins agressif que blanc pur) */
