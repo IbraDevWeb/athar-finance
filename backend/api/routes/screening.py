@@ -16,6 +16,7 @@ def sanitize_value(val, default=0, is_percent=False):
         
     return round(val, 2) if isinstance(val, (int, float)) else val
 
+
 # --- ROUTE 1 : ANALYSE ACTION ---
 @screening_bp.route('/analyze', methods=['POST'])
 def analyze_ticker():
@@ -26,10 +27,15 @@ def analyze_ticker():
         return jsonify({"error": "Ticker manquant"}), 400
 
     try:
-        # Récupération des données Yahoo Finance
         stock = yf.Ticker(ticker_input)
-        info = stock.info
         
+        try:
+            info = stock.info
+            if not info or len(info) < 5:
+                return jsonify({"error": "Ticker introuvable ou données indisponibles"}), 404
+        except Exception:
+            return jsonify({"error": "Yahoo Finance indisponible, réessayez dans quelques secondes"}), 503
+
         # --- CALCULS AAOIFI ---
         market_cap = info.get('marketCap', 0)
         total_debt = info.get('totalDebt', 0)
@@ -53,18 +59,14 @@ def analyze_ticker():
         is_halal = len(found_keywords) == 0 and debt_ratio < 33 and cash_ratio < 33
 
         # --- CORRECTION INTELLIGENTE DU POURCENTAGE ---
-        # Yahoo renvoie parfois 0.02 (pour 2%) et parfois 2.0 (pour 2%).
         raw_change = info.get('regularMarketChangePercent') or 0
-        
-        # Si la valeur absolue est inférieure à 0.5 (donc < 50%), on suppose que c'est un format décimal (ex: 0.02)
-        # Sinon, c'est déjà un pourcentage (ex: -2.08)
         change_p = round(raw_change * 100, 2) if abs(raw_change) < 0.5 else round(raw_change, 2)
 
         result = {
             "ticker": ticker_input,
             "name": info.get('longName', ticker_input),
             "price": info.get('currentPrice', info.get('regularMarketPrice', 0)),
-            "change_p": change_p, # Pourcentage corrigé
+            "change_p": change_p,
             "sector": info.get('sector', 'N/A'),
             "industry": info.get('industry', 'N/A'),
             "ratios": {
@@ -103,28 +105,30 @@ def scan_etf():
 
     try:
         etf = yf.Ticker(ticker_input)
-        info = etf.info
-        
-        # 1. Holdings
+
         try:
-            holdings_df = etf.holdings
-            if holdings_df is not None and not holdings_df.empty:
-                top_holdings = []
-                for index, row in holdings_df.head(10).iterrows():
-                    name = index if isinstance(index, str) else "Inconnu"
-                    if 'Name' in holdings_df.columns:
-                        name = row['Name']
-                    
-                    percent = row.get('% Assets', row.get('Weight', 0))
-                    if percent < 1: percent = percent * 100
-                    
+            info = etf.info
+            if not info or len(info) < 5:
+                return jsonify({"error": "ETF introuvable ou données indisponibles"}), 404
+        except Exception:
+            return jsonify({"error": "Yahoo Finance indisponible, réessayez dans quelques secondes"}), 503
+
+        # 1. Holdings
+        top_holdings = []
+        try:
+            funds_data = etf.funds_data
+            top_h = funds_data.top_holdings if funds_data else None
+            if top_h is not None and not top_h.empty:
+                for _, row in top_h.head(10).iterrows():
+                    holding_name = row.get("Holding Name", row.get("Symbol", "Inconnu"))
+                    percent = row.get("% Net Assets", row.get("Weight", 0))
+                    if isinstance(percent, float) and percent < 1:
+                        percent = percent * 100
                     top_holdings.append({
-                        "name": str(name),
+                        "name": str(holding_name),
                         "percent": round(float(percent), 2)
                     })
-            else:
-                top_holdings = []
-        except:
+        except Exception:
             top_holdings = []
 
         # 2. Secteurs
