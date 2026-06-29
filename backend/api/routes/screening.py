@@ -17,6 +17,16 @@ def sanitize_value(val, default=0, is_percent=False):
     return round(val, 2) if isinstance(val, (int, float)) else val
 
 
+def is_ticker_valid(info: dict) -> bool:
+    """Vérifie que l'info renvoyée par yfinance correspond à un ticker réel."""
+    # yfinance 1.x renvoie parfois un dict avec uniquement quoteType="NONE"
+    if not info or len(info) < 5:
+        return False
+    if info.get("quoteType", "").upper() in ("NONE", ""):
+        return False
+    return True
+
+
 # --- ROUTE 1 : ANALYSE ACTION ---
 @screening_bp.route('/analyze', methods=['POST'])
 def analyze_ticker():
@@ -31,9 +41,12 @@ def analyze_ticker():
         
         try:
             info = stock.info
-            if not info or len(info) < 5:
+            if not is_ticker_valid(info):
                 return jsonify({"error": "Ticker introuvable ou données indisponibles"}), 404
-        except Exception:
+        except Exception as e:
+            err_str = str(e).lower()
+            if "404" in err_str or "not found" in err_str:
+                return jsonify({"error": "Ticker introuvable"}), 404
             return jsonify({"error": "Yahoo Finance indisponible, réessayez dans quelques secondes"}), 503
 
         # --- CALCULS AAOIFI ---
@@ -58,14 +71,20 @@ def analyze_ticker():
         
         is_halal = len(found_keywords) == 0 and debt_ratio < 33 and cash_ratio < 33
 
-        # --- CORRECTION INTELLIGENTE DU POURCENTAGE ---
+        # --- CORRECTION DU POURCENTAGE DE VARIATION ---
+        # yfinance 1.x renvoie directement la valeur en % (ex: -1.23 pour -1.23%)
+        # Les versions antérieures renvoyaient un décimal (ex: -0.0123)
         raw_change = info.get('regularMarketChangePercent') or 0
-        change_p = round(raw_change * 100, 2) if abs(raw_change) < 0.5 else round(raw_change, 2)
+        if abs(raw_change) < 1 and raw_change != 0:
+            # Probablement encore en décimal (ancienne version)
+            change_p = round(raw_change * 100, 2)
+        else:
+            change_p = round(raw_change, 2)
 
         result = {
             "ticker": ticker_input,
             "name": info.get('longName', ticker_input),
-            "price": info.get('currentPrice', info.get('regularMarketPrice', 0)),
+            "price": info.get('currentPrice') or info.get('regularMarketPrice') or 0,
             "change_p": change_p,
             "sector": info.get('sector', 'N/A'),
             "industry": info.get('industry', 'N/A'),
@@ -108,16 +127,20 @@ def scan_etf():
 
         try:
             info = etf.info
-            if not info or len(info) < 5:
+            if not is_ticker_valid(info):
                 return jsonify({"error": "ETF introuvable ou données indisponibles"}), 404
-        except Exception:
+        except Exception as e:
+            err_str = str(e).lower()
+            if "404" in err_str or "not found" in err_str:
+                return jsonify({"error": "ETF introuvable"}), 404
             return jsonify({"error": "Yahoo Finance indisponible, réessayez dans quelques secondes"}), 503
 
-        # 1. Holdings
+        # 1. Holdings — compatible yfinance 0.2.x et 1.x
         top_holdings = []
         try:
+            # Méthode 1 : funds_data (ancienne API, parfois encore disponible)
             funds_data = etf.funds_data
-            top_h = funds_data.top_holdings if funds_data else None
+            top_h = getattr(funds_data, 'top_holdings', None)
             if top_h is not None and not top_h.empty:
                 for _, row in top_h.head(10).iterrows():
                     holding_name = row.get("Holding Name", row.get("Symbol", "Inconnu"))
@@ -129,7 +152,25 @@ def scan_etf():
                         "percent": round(float(percent), 2)
                     })
         except Exception:
-            top_holdings = []
+            pass
+
+        # Méthode 2 : get_funds_data() si funds_data échoue (yfinance 1.x)
+        if not top_holdings:
+            try:
+                fd = etf.get_funds_data()
+                top_h = getattr(fd, 'top_holdings', None)
+                if top_h is not None and not top_h.empty:
+                    for _, row in top_h.head(10).iterrows():
+                        holding_name = row.get("Holding Name", row.get("Symbol", "Inconnu"))
+                        percent = row.get("% Net Assets", row.get("Weight", 0))
+                        if isinstance(percent, float) and percent < 1:
+                            percent = percent * 100
+                        top_holdings.append({
+                            "name": str(holding_name),
+                            "percent": round(float(percent), 2)
+                        })
+            except Exception:
+                pass
 
         # 2. Secteurs
         sectors = []
