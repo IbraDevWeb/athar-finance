@@ -87,13 +87,6 @@ export default function App() {
 
         <main ref={mainRef} id="main-content" className="min-w-0 flex-1 overflow-y-auto scroll-smooth">
           <div className="mx-auto max-w-[1440px] px-4 pb-8 pt-7 sm:px-7 lg:px-10 lg:pt-10">
-            {currentPage !== 'home' && (
-              <div className="athar-page-heading mb-9">
-                <div className="athar-eyebrow mb-3">ATHAR / {PAGE_TITLES[currentPage]}</div>
-                <h1 className="text-3xl font-semibold tracking-tight text-brand-dark dark:text-white sm:text-[36px]">{PAGE_TITLES[currentPage]}</h1>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{PAGE_DESCRIPTIONS[currentPage]}</p>
-              </div>
-            )}
             <div className="animate-fade-in" key={currentPage}>
               {currentPage === 'home' && <Home onNavigate={navigate} />}
               {currentPage === 'screener' && <div className="space-y-12"><Screener autoSearch={screenerTicker} /><section className="border-t border-slate-200 pt-9 dark:border-white/10"><NewsModule /></section></div>}

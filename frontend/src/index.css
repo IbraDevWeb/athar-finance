@@ -70,3 +70,16 @@ input::placeholder, textarea::placeholder { color: #8795a3; }
   .athar-shell .text-5xl { font-size: 2rem; line-height: 1.2; }
   .athar-shell .rounded-\[2rem\], .athar-shell .rounded-\[2\.5rem\] { border-radius: 1rem; }
 }
+
+/* La même finition sur les modules historiques, sans réécrire leur logique métier. */
+.athar-shell main .rounded-3xl,
+.athar-shell main .rounded-\[2rem\],
+.athar-shell main .rounded-\[2\.5rem\] { border-radius: 16px; }
+.athar-shell main .shadow-2xl,
+.athar-shell main .shadow-xl { box-shadow: 0 4px 24px rgba(19, 39, 55, .055); }
+.athar-shell main .hover\:-translate-y-2:hover,
+.athar-shell main .hover\:-translate-y-1:hover { transform: translateY(-2px); }
+.dark .text-brand-dark { color: #eff4f8; }
+.dark .athar-shell main .border-gray-100 { border-color: #293b4a; }
+.dark .athar-shell main .bg-gray-50 { background-color: #1c2a36; }
+.dark .athar-shell main .text-gray-900 { color: #ecf2f7; }
