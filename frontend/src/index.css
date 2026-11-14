@@ -1,67 +1,72 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    /* Par défaut : Texte sombre sur fond clair / Texte clair sur fond sombre */
-    @apply text-gray-900 bg-[#f8f9fa] dark:bg-[#050505] dark:text-gray-100 transition-colors duration-300;
-  }
-
-  /* Règle universelle pour les titres (H1, H2, etc.) */
-  h1, h2, h3, h4, h5, h6 {
-    @apply text-gray-900 dark:text-white;
-  }
-
-  /* Règle universelle pour les inputs (souvent les coupables !) */
-  input, select, textarea {
-    @apply text-gray-900 bg-white border-gray-200 
-           dark:text-white dark:bg-[#1a1a1a] dark:border-white/10;
-  }
-  
-  /* Règle pour les placeholders (le texte "Rechercher...") */
-  input::placeholder {
-    @apply text-gray-400 dark:text-gray-500;
-  }
+:root {
+  font-family: 'DM Sans', sans-serif;
+  color-scheme: light;
+  font-synthesis: none;
 }
-
-/* --- BASE --- */
-body {
-  background-color: #f8f9fa; /* Gris très clair pour le jour (moins agressif que blanc pur) */
-  color: #111827;            /* Noir doux */
-  -webkit-font-smoothing: antialiased;
+* { box-sizing: border-box; }
+html, body, #root { min-height: 100%; margin: 0; }
+body { background: #f5f7f9; color: #182635; -webkit-font-smoothing: antialiased; }
+.dark { color-scheme: dark; }
+.dark body { background: #0d151e; color: #e8edf3; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .6; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid #b49a6a; outline-offset: 3px;
 }
-
-.dark body {
-  background-color: #050505; /* Noir profond */
-  color: #ffffff;
+h1, h2, h3, h4, h5, h6 { overflow-wrap: anywhere; }
+img, svg { flex-shrink: 0; }
+.athar-shell { background: #f5f7f9; color: #182635; }
+.dark .athar-shell { background: #0d151e; color: #e8edf3; }
+.athar-sidebar { background: #142130; border-right: 1px solid #233345; color: #e9edf1; }
+.athar-logo-mark { background: #c7ad79; color: #172332; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
+.athar-nav-item { color: #a9b7c7; }
+.athar-nav-item:hover { background: #233346; color: #fff; }
+.athar-nav-item.is-active { color: #fff; background: #2a3c4d; box-shadow: inset 3px 0 0 #c7ad79; }
+.athar-topbar { background: rgba(255,255,255,.88); border-bottom: 1px solid #e8edf1; backdrop-filter: blur(14px); }
+.dark .athar-topbar { background: #131f2b; border-bottom-color: #293847; }
+.athar-hero { background: radial-gradient(circle at 88% 13%, rgba(204,183,133,.15), transparent 32%), linear-gradient(110deg,#17293a 0%,#1b3443 100%); border: 1px solid #344958; }
+.athar-panel, .athar-tool-card { background: #fff; border: 1px solid #e4eaf0; border-radius: 16px; box-shadow: 0 4px 18px rgba(22,43,57,.025); }
+.dark .athar-panel, .dark .athar-tool-card { background: #16232f; border-color: #293a48; }
+.athar-tool-card { transition: border-color .2s, transform .2s, box-shadow .2s; }
+.athar-tool-card:hover { border-color: #c7ad79; transform: translateY(-2px); box-shadow: 0 12px 28px rgba(20,35,48,.08); }
+.athar-tool-icon { background: #f1f2ee; color: #9b7c4b; }
+.dark .athar-tool-icon { background: #293a48; color: #d9c59e; }
+.athar-eyebrow { color: #9b815c; font-size: 10px; font-weight: 700; letter-spacing: .17em; line-height: 1.5; }
+.athar-icon-button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex-shrink: 0; border: 1px solid #e4eaf0; border-radius: 10px; color: #526173; background: #fff; transition: background .2s; }
+.athar-icon-button:hover { background: #f2f5f7; }
+.dark .athar-icon-button { background: #1c2a36; color: #dee5eb; border-color: #314251; }
+.dark .athar-icon-button:hover { background: #293a48; }
+.athar-primary-button, .athar-secondary-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; border-radius: 9px; padding: 13px 19px; font-size: 12px; font-weight: 700; transition: background .2s, transform .2s; }
+.athar-primary-button { background: #c7ad79; color: #162130; }
+.athar-primary-button:hover { background: #e0c58d; transform: translateY(-1px); }
+.athar-secondary-button { background: #ffffff0d; color: #fff; border: 1px solid #ffffff40; }
+.athar-secondary-button:hover { background: #ffffff20; }
+.athar-page-heading { border-bottom: 1px solid #e5eaf0; padding-bottom: 24px; }
+.dark .athar-page-heading { border-color: #293a48; }
+.font-display { font-family: 'Manrope', sans-serif; letter-spacing: -.035em; }
+.font-sans { font-family: 'DM Sans', sans-serif; }
+.font-serif { font-family: Georgia, 'Times New Roman', serif; }
+.animate-fade-in, .animate-fade-in-up { animation: athar-in .35s ease-out both; }
+@keyframes athar-in { from { opacity: .2; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+.custom-scrollbar::-webkit-scrollbar, ::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-thumb, ::-webkit-scrollbar-thumb { background: #90a0ac66; border-radius: 6px; }
+input, select, textarea { max-width: 100%; background: #fff; border-color: #d9e1e8; color: #1e2c3a; }
+.dark input, .dark select, .dark textarea { background: #202e3b; border-color: #374858; color: #f1f5f9; }
+input::placeholder, textarea::placeholder { color: #8795a3; }
+.dark input::placeholder, .dark textarea::placeholder { color: #9ca9b5; }
+.dark .bg-white { background-color: #192633; }
+.dark .dark\\:bg-\\[\\#121212\\] { background-color: #192633; }
+.dark .dark\\:bg-\\[\\#1a1a1a\\] { background-color: #202e3b; }
+@media (max-width: 640px) {
+  .athar-shell main { overflow-x: hidden; }
+  .athar-shell .text-6xl { font-size: 2.5rem; line-height: 1.2; }
+  .athar-shell .text-5xl { font-size: 2rem; line-height: 1.2; }
+  .athar-shell .rounded-\\[2rem\\], .athar-shell .rounded-\\[2\\.5rem\\] { border-radius: 1rem; }
 }
-
-/* --- INPUTS (Contraste forcé) --- */
-input, select, textarea {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  border: 1px solid #e5e7eb !important;
-  outline: none;
-}
-
-.dark input, .dark select, .dark textarea {
-  background-color: #1a1a1a !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-input:focus, select:focus, textarea:focus {
-  border-color: #D4AF37 !important;
-}
-
-/* --- SCROLLBAR --- */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-.dark ::-webkit-scrollbar-thumb { background: #333; }
-
-/* --- ANIMATIONS --- */
-.animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

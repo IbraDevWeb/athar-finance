@@ -1,101 +1,61 @@
 import React from 'react';
-import { 
-  LayoutDashboard, Search, Wallet, BookOpen, 
-  Scale, TrendingUp, Heart, Calculator, User, Home, Layers, Activity, Crown, 
-  Sparkles // <--- AJOUT ICÔNE POUR IHSAN
-} from 'lucide-react';
+import { LayoutDashboard, Search, Wallet, BookOpen, Scale, TrendingUp, Heart, Calculator, House, Layers, ChartNoAxesCombined, ArrowLeftRight, Sprout } from 'lucide-react';
 
-export default function Sidebar({ activeTab, onNavigate, isMobile, closeMobileMenu }) {
-  
-  const NavItem = ({ id, icon: Icon, label }) => {
-    const isActive = activeTab === id;
-    return (
-      <button
-        onClick={() => {
-          onNavigate(id);
-          if (isMobile) closeMobileMenu();
-        }}
-        className={`w-full flex items-center gap-4 px-5 py-3.5 transition-all duration-300 group relative rounded-xl mx-2 my-1
-          ${isActive 
-            ? 'bg-brand-gold/10 text-brand-gold' 
-            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-brand-dark dark:hover:text-white'
-          } ${isMobile ? 'max-w-[90%]' : 'w-[90%]'}`}
-      >
-        <Icon 
-          size={20} 
-          className={`transition-transform duration-300 ${isActive ? 'scale-105' : 'group-hover:scale-105'}`} 
-          strokeWidth={isActive ? 2.5 : 1.5}
-        />
-        <span className={`text-sm tracking-wide ${isActive ? 'font-bold' : 'font-medium'}`}>
-          {label}
-        </span>
-        {isActive && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-brand-gold rounded-full"></div>
-        )}
-      </button>
-    );
-  };
+export const NAV_GROUPS = [
+  { label: 'Vue générale', items: [
+    { id: 'home', label: 'Tableau de bord', icon: LayoutDashboard },
+    { id: 'watchlist', label: 'Ma watchlist', icon: Heart },
+    { id: 'portfolio', label: 'Portefeuille', icon: Wallet },
+  ]},
+  { label: 'Marchés & analyses', items: [
+    { id: 'screener', label: 'Analyse des actifs', icon: Search },
+    { id: 'chart', label: 'Cours & graphiques', icon: ChartNoAxesCombined },
+    { id: 'comparator', label: 'Comparateur', icon: Scale },
+    { id: 'etf', label: 'Analyse ETF', icon: Layers },
+  ]},
+  { label: 'Planification', items: [
+    { id: 'simulator', label: 'Simulations', icon: TrendingUp },
+    { id: 'house', label: 'Immobilier', icon: House },
+    { id: 'lifestyle', label: 'Objectifs de vie', icon: ArrowLeftRight },
+    { id: 'zakat', label: 'Calcul de la zakat', icon: Calculator },
+  ]},
+  { label: 'Apprendre', items: [
+    { id: 'academy', label: 'Académie', icon: BookOpen },
+    { id: 'ihsan-data', label: 'Jardin des vertueux', icon: Sprout },
+  ]},
+];
 
+export default function Sidebar({ activeTab, onNavigate }) {
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-brand-dark transition-colors duration-300">
-      
-      {/* LOGO */}
-      <div className="p-8 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-gradient-gold flex items-center justify-center text-white shadow-glow">
-          <span className="font-display font-bold text-xl">A</span>
+    <div className="flex h-full flex-col">
+      <button onClick={() => onNavigate('home')} className="flex items-center gap-3 px-7 pb-8 pt-8 text-left" aria-label="Athar Finance, accueil">
+        <div className="athar-logo-mark flex h-10 w-10 items-center justify-center rounded-xl text-xl font-semibold">A</div>
+        <div className="leading-tight">
+          <strong className="block text-lg font-semibold tracking-[0.05em] text-white">athar<span className="text-[#c7ad79]">.</span></strong>
+          <span className="text-[10px] font-medium tracking-[0.18em] text-slate-400 uppercase">Private finance</span>
         </div>
-        <div>
-          <h1 className="font-display text-lg font-bold text-brand-dark dark:text-white tracking-widest leading-none">
-            ATHAR
-          </h1>
-          <p className="text-[9px] text-brand-gold uppercase tracking-[0.3em] mt-1">Private Finance</p>
-        </div>
-      </div>
+      </button>
 
-      {/* NAV */}
-      <nav className="flex-1 overflow-y-auto py-4 space-y-1 custom-scrollbar">
-        <MenuSection label="Général" />
-        <NavItem id="home" icon={LayoutDashboard} label="Tableau de Bord" />
-        <NavItem id="watchlist" icon={Heart} label="Watchlist" />
-
-        <MenuSection label="Marchés" />
-        <NavItem id="screener" icon={Search} label="Screener Pro" />
-        <NavItem id="chart" icon={Activity} label="Market Watch" />
-        <NavItem id="etf" icon={Layers} label="ETF X-Ray" />
-        <NavItem id="comparator" icon={Scale} label="Comparateur Actions" />
-
-        <MenuSection label="Outils Lifestyle" />
-        <NavItem id="lifestyle" icon={Crown} label="Lifestyle Converter" />
-        <NavItem id="house" icon={Home} label="Acheter vs Louer" />
-        <NavItem id="simulator" icon={TrendingUp} label="Intérêts Composés" />
-
-        <MenuSection label="Patrimoine" />
-        <NavItem id="portfolio" icon={Wallet} label="Mon Portefeuille" />
-        <NavItem id="zakat" icon={Calculator} label="Zakat & Purif." />
-
-        <MenuSection label="Savoir" />
-        <NavItem id="academy" icon={BookOpen} label="Académie" />
-        {/* AJOUT DU MODULE IHSAN ICI */}
-        <NavItem id="ihsan-data" icon={Sparkles} label="Jardin des Vertueux" />
+      <nav aria-label="Navigation principale" className="min-h-0 flex-1 overflow-y-auto px-3 pb-8 custom-scrollbar">
+        {NAV_GROUPS.map(group => (
+          <div key={group.label} className="mb-6">
+            <p className="mb-2 px-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">{group.label}</p>
+            <div className="space-y-0.5">
+              {group.items.map(({ id, label, icon: Icon }) => (
+                <button key={id} type="button" onClick={() => onNavigate(id)} aria-current={activeTab === id ? 'page' : undefined}
+                  className={`athar-nav-item flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left text-[13px] font-medium transition-colors ${activeTab === id ? 'is-active' : ''}`}>
+                  <Icon size={17} strokeWidth={1.8} aria-hidden="true" />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
       </nav>
-
-      <div className="p-4 border-t border-gray-100 dark:border-white/5 mx-4 mb-4">
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 cursor-pointer hover:border-brand-gold/30 transition-colors">
-            <div className="w-8 h-8 rounded-full bg-white dark:bg-white/10 flex items-center justify-center text-xs text-brand-gold font-bold shadow-sm">
-                <User size={14} />
-            </div>
-            <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-gray-700 dark:text-white truncate">Investisseur</p>
-                <p className="text-[9px] text-emerald-500">● Connecté</p>
-            </div>
-        </div>
+      <div className="border-t border-white/10 px-6 py-5">
+        <div className="text-xs font-semibold text-slate-200">Espace investisseur</div>
+        <p className="mt-1 text-[11px] leading-relaxed text-slate-400">Analyse et pédagogie financière.</p>
       </div>
     </div>
   );
 }
-
-const MenuSection = ({ label }) => (
-    <div className="px-6 mb-2 mt-6">
-        <span className="text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest">{label}</span>
-    </div>
-);
