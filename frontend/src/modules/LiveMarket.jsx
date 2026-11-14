@@ -1,17 +1,21 @@
+import { API_URL } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 export default function LiveMarket() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const fetchMarket = async () => {
     try {
-      const res = await fetch('https://athar-api.onrender.com/api/market/live-prices');
+      const res = await fetch(`${API_URL}/market/live-prices`);
       const json = await res.json();
+      if (!res.ok || !Array.isArray(json)) throw new Error(json.error || 'Cotations indisponibles');
       setData(json);
+      setError('');
     } catch (err) {
-      console.error(err);
+      setError(err.message || 'Cotations indisponibles');
     } finally {
       setLoading(false);
     }
@@ -31,6 +35,7 @@ export default function LiveMarket() {
       </div>
 
       <div className="space-y-4">
+        {error && <p role="status" className="mb-3 text-xs text-red-500">{error}</p>}
         {loading ? (
           <div className="h-20 bg-gray-100 dark:bg-white/5 animate-pulse rounded-xl"></div>
         ) : data.map((asset) => (
@@ -40,7 +45,7 @@ export default function LiveMarket() {
               <p className="text-[9px] text-gray-400 font-mono">{asset.symbol}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm font-bold dark:text-white">{asset.price} $</p>
+              <p className="text-sm font-bold dark:text-white">{asset.price} {asset.currency}</p>
               <p className={`text-[10px] font-bold flex items-center justify-end gap-1 ${asset.change >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                 {asset.change >= 0 ? <TrendingUp size={10}/> : <TrendingDown size={10}/>}
                 {asset.change}%

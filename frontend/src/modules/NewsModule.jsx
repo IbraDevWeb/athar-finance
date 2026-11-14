@@ -1,7 +1,8 @@
+import { API_URL } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { Newspaper, ExternalLink, RefreshCw, Image as ImageIcon } from 'lucide-react';
 
-const API_URL = 'https://athar-api.onrender.com/api';
+
 
 export default function NewsModule() {
   const [news, setNews] = useState([]);
@@ -16,6 +17,7 @@ export default function NewsModule() {
     try {
       const response = await fetch(`${API_URL}/news/latest`);
       const data = await response.json();
+      if (!response.ok || !Array.isArray(data)) throw new Error(data.error || 'Flux indisponible');
       setNews(data);
     } catch (error) {
       console.error("Erreur news:", error);

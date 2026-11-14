@@ -1,3 +1,4 @@
+import { API_URL } from '../services/api';
 import React, { useState } from 'react';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip 
@@ -6,7 +7,7 @@ import {
   Search, Scale, CheckCircle, XCircle, Trophy, TrendingUp, Shield, Wallet, Zap, ArrowRightLeft 
 } from 'lucide-react';
 
-const API_URL = 'https://athar-api.onrender.com/api';
+
 
 export default function ComparatorModule() {
   const [tickerA, setTickerA] = useState('');
@@ -43,18 +44,18 @@ export default function ComparatorModule() {
 
           // Normalisation des scores (0-100) pour le graphique
           const sA = {
-             roe: Math.min(Math.max(A.technicals.roe * 2, 0), 100),
-             safe: Math.min(Math.max((100 - A.ratios.debt_ratio), 0), 100),
-             div: Math.min(A.technicals.dividend_yield * 15, 100),
-             value: Math.min(Math.max(100 - (A.technicals.per * 1.5), 0), 100),
+             roe: Math.min(Math.max((Number(A.technicals?.roe) || 0) * 2, 0), 100),
+             safe: Math.min(Math.max((100 - (Number(A.ratios?.debt_ratio) || 0)), 0), 100),
+             div: Math.min((Number(A.technicals?.dividend_yield) || 0) * 15, 100),
+             value: Math.min(Math.max(100 - ((Number(A.technicals?.per) || 0) * 1.5), 0), 100),
              halal: A.compliance.is_halal ? 100 : 0
           };
 
           const sB = {
-             roe: Math.min(Math.max(B.technicals.roe * 2, 0), 100),
-             safe: Math.min(Math.max((100 - B.ratios.debt_ratio), 0), 100),
-             div: Math.min(B.technicals.dividend_yield * 15, 100),
-             value: Math.min(Math.max(100 - (B.technicals.per * 1.5), 0), 100),
+             roe: Math.min(Math.max((Number(B.technicals?.roe) || 0) * 2, 0), 100),
+             safe: Math.min(Math.max((100 - (Number(B.ratios?.debt_ratio) || 0)), 0), 100),
+             div: Math.min((Number(B.technicals?.dividend_yield) || 0) * 15, 100),
+             value: Math.min(Math.max(100 - ((Number(B.technicals?.per) || 0) * 1.5), 0), 100),
              halal: B.compliance.is_halal ? 100 : 0
           };
 

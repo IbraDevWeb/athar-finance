@@ -1,3 +1,4 @@
+import { API_URL } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar 
@@ -7,7 +8,7 @@ import {
   BarChart2, ArrowUpRight, ArrowDownRight, Zap 
 } from 'lucide-react';
 
-const API_URL = 'https://athar-api.onrender.com/api';
+
 
 export default function ChartModule() {
   const [ticker, setTicker] = useState('NVDA');
@@ -15,6 +16,7 @@ export default function ChartModule() {
   const [period, setPeriod] = useState('1y');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const periods = [
     { label: '1J', val: '1d' },
@@ -38,15 +40,14 @@ export default function ChartModule() {
         body: JSON.stringify({ ticker: sym, period: time })
       });
       const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Graphique indisponible');
+      setError('');
       
-      // Petit log pour vérifier dans la console que le prix est bien un nombre
-      if (json.history && json.history.length > 0) {
-        console.log("Données reçues pour le chart:", json.history[0]); 
-      }
       
       if (json.history) setData(json);
     } catch (err) {
-      console.error(err);
+      setError(err.message || 'Graphique indisponible');
+      setData(null);
     } finally {
       setLoading(false);
     }
@@ -89,6 +90,7 @@ export default function ChartModule() {
         </form>
       </div>
 
+      {error && <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-100">{error}</div>}
       {/* MAIN CARD */}
       <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-white/5 rounded-[2rem] shadow-xl overflow-hidden relative">
         
@@ -116,7 +118,7 @@ export default function ChartModule() {
                   </h1>
                   <div>
                       <span className="text-3xl font-mono font-bold text-gray-900 dark:text-white">
-                        {data.current_price?.toLocaleString()} <span className="text-sm">$</span>
+                        {data.current_price?.toLocaleString()} <span className="text-sm">{data.currency || ""}</span>
                       </span>
                       <div className={`text-sm font-bold mt-1 ${isPositive ? 'text-emerald-500' : 'text-red-500'}`}>
                         {data.change_p > 0 ? '+' : ''}{data.change_p}%
