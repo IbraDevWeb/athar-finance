@@ -109,9 +109,9 @@ def analyze_symbol(symbol):
     has_ratios = debt_ratio is not None and cash_ratio is not None
     status = "non_compliant" if found or (debt_ratio is not None and debt_ratio >= 33) or (cash_ratio is not None and cash_ratio >= 33) else ("potentially_compliant" if has_ratios and business_text else "indeterminate")
 
-    roe_value = number(metrics.get("returnOnEquityTTM") or metrics.get("roeTTM"))
+    roe_value = number(metrics.get("returnOnEquityTTM") if metrics.get("returnOnEquityTTM") is not None else metrics.get("roeTTM"))
     # For P/E, use the documented earnings yield if an explicit P/E is absent.
-    pe_value = number(metrics.get("priceToEarningsRatioTTM") or metrics.get("peRatioTTM"))
+    pe_value = number(metrics.get("priceToEarningsRatioTTM") if metrics.get("priceToEarningsRatioTTM") is not None else metrics.get("peRatioTTM"))
     earnings_yield = number(metrics.get("earningsYieldTTM"))
     if pe_value is None and earnings_yield and earnings_yield > 0:
         pe_value = round(1 / earnings_yield, 2)

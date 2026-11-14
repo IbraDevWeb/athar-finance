@@ -70,3 +70,7 @@ cd .. && python -m unittest discover -s backend/tests -v
 ```
 
 Le workflow GitHub Actions lance les builds et les tests sur chaque pull request et push.
+
+## Déploiement Render
+
+Pour un **Web Service** existant : définir `Root Directory = backend`, `Build Command = pip install -r requirements.txt`, `Start Command = gunicorn app:app` et `Health Check Path = /api/health`. Ajouter `FMP_API_KEY` comme variable secrète et `CORS_ORIGINS` avec l'origine exacte du site. Pour un **Static Site** : `Root Directory = frontend`, `Build Command = npm ci && npm run build`, `Publish Directory = dist`, `VITE_API_URL` = URL de l'API incluant `/api`. Cette configuration doit être appliquée à vos services Render ; pousser du code GitHub ne change pas automatiquement leur environnement.

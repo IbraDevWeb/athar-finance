@@ -45,17 +45,17 @@ export default function ComparatorModule() {
           // Normalisation des scores (0-100) pour le graphique
           const sA = {
              roe: Math.min(Math.max((Number(A.technicals?.roe) || 0) * 2, 0), 100),
-             safe: Math.min(Math.max((100 - (Number(A.ratios?.debt_ratio) || 100)), 0), 100),
+             safe: Math.min(Math.max((100 - (A.ratios?.debt_ratio == null ? 100 : Number(A.ratios.debt_ratio))), 0), 100),
              div: Math.min((Number(A.technicals?.dividend_yield) || 0) * 15, 100),
-             value: Math.min(Math.max(100 - ((Number(A.technicals?.per) || 100) * 1.5), 0), 100),
+             value: Math.min(Math.max(100 - ((A.technicals?.per == null ? 100 : Number(A.technicals.per)) * 1.5), 0), 100),
              halal: A.compliance.is_halal ? 100 : 0
           };
 
           const sB = {
              roe: Math.min(Math.max((Number(B.technicals?.roe) || 0) * 2, 0), 100),
-             safe: Math.min(Math.max((100 - (Number(B.ratios?.debt_ratio) || 100)), 0), 100),
+             safe: Math.min(Math.max((100 - (B.ratios?.debt_ratio == null ? 100 : Number(B.ratios.debt_ratio))), 0), 100),
              div: Math.min((Number(B.technicals?.dividend_yield) || 0) * 15, 100),
-             value: Math.min(Math.max(100 - ((Number(B.technicals?.per) || 100) * 1.5), 0), 100),
+             value: Math.min(Math.max(100 - ((B.technicals?.per == null ? 100 : Number(B.technicals.per)) * 1.5), 0), 100),
              halal: B.compliance.is_halal ? 100 : 0
           };
 
