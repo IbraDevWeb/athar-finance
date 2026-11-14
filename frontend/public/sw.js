@@ -1,4 +1,4 @@
-const CACHE_NAME = 'athar-cache-v2';
+const CACHE_NAME = 'athar-cache-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -32,9 +32,8 @@ self.addEventListener('activate', (event) => {
 
 // Interception réseau
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
-    })
-  );
+  if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
+  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
 });
