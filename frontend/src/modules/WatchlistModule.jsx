@@ -62,7 +62,7 @@ export default function WatchlistModule({ onAnalyze }) {
             </div>
             <div className="mb-5 flex flex-wrap items-end justify-between gap-4 border-b border-slate-100 pb-5 dark:border-white/10">
               <div><p className="text-xs text-slate-500">Dernier cours</p><p className="mt-1 text-2xl font-semibold tabular-nums">{loading && !item ? 'Chargement…' : display(current, item?.currency)}</p></div>
-              {item && <span className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${item.compliance?.status === 'potentially_compliant' ? 'bg-emerald-50 text-emerald-800' : item.compliance?.status === 'non_compliant' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-800'}`}>{item.compliance?.status === 'potentially_compliant' ? 'Filtrage favorable*' : item.compliance?.status === 'non_compliant' ? 'Critère(s) non rempli(s)' : 'Données insuffisantes'}</span>}
+              {item && <span className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${(item.compliance?.status === 'potentially_compliant' || item.compliance?.status === 'compliant') ? 'bg-emerald-50 text-emerald-800' : item.compliance?.status === 'non_compliant' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-800'}`}>{item.compliance?.status === 'compliant' ? 'Conforme selon Zoya' : item.compliance?.status === 'potentially_compliant' ? 'Filtrage favorable*' : item.compliance?.status === 'non_compliant' ? 'Critère(s) non rempli(s)' : 'Données insuffisantes'}</span>}
             </div>
             <label className="block text-xs font-medium text-slate-500">Alerte de prix indicative ({item?.currency || 'devise de cotation'})
               <input type="number" min="0" step="any" value={target} onChange={e => setTargets(v => ({...v, [symbol]: e.target.value}))} placeholder="Prix cible" className="mt-2 w-full rounded-lg border border-slate-200 p-3 text-sm" />
@@ -72,6 +72,7 @@ export default function WatchlistModule({ onAnalyze }) {
           </article>;
         })}
       </div>}
+    {Object.values(quotes).some(item => item.source === 'Zoya') && <p className="text-xs text-slate-500"><a href="https://zoya.finance/api" target="_blank" rel="noreferrer" className="underline">Données de conformité fournies par Zoya</a>.</p>}
     <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">*Filtrage partiel et indicatif, pas une certification religieuse. Les cours peuvent être différés. Les cibles ne déclenchent pas de notifications en arrière-plan.</p>
   </div>;
 }

@@ -74,3 +74,31 @@ Le workflow GitHub Actions lance les builds et les tests sur chaque pull request
 ## Déploiement Render
 
 Pour un **Web Service** existant : définir `Root Directory = backend`, `Build Command = pip install -r requirements.txt`, `Start Command = gunicorn app:app` et `Health Check Path = /api/health`. Ajouter `FMP_API_KEY` comme variable secrète et `CORS_ORIGINS` avec l'origine exacte du site. Pour un **Static Site** : `Root Directory = frontend`, `Build Command = npm ci && npm run build`, `Publish Directory = dist`, `VITE_API_URL` = URL de l'API incluant `/api`. Cette configuration doit être appliquée à vos services Render ; pousser du code GitHub ne change pas automatiquement leur environnement.
+
+## Fournisseur alternatif : Zoya (screening de conformité)
+
+Le screener peut utiliser **Zoya Basic** pour les actions cotées aux États-Unis,
+à la place des données financières FMP. Le statut est directement fourni par
+Zoya selon la méthodologie AAOIFI (et non recalculé à partir de ratios incomplets).
+
+Variables secrètes du **backend Render** :
+
+- `SCREENING_PROVIDER=zoya` pour choisir Zoya explicitement (sinon Zoya est choisi automatiquement quand `ZOYA_API_KEY` est défini, FMP dans les autres cas).
+- `ZOYA_API_KEY=live-...` : clé API **live** du compte développeur Zoya.
+- `ZOYA_PUBLIC_DISPLAY_AUTHORIZED=true` : à renseigner **uniquement** après avoir obtenu l'autorisation écrite de Zoya pour afficher ses données sur un site accessible au public.
+
+**Attention aux licences** : une licence personnelle Zoya n'autorise pas la publication
+des données. Une licence commerciale nécessite elle aussi l'accord écrit préalable
+de Zoya pour un affichage public. Vérifier les modalités auprès de Zoya avant de
+renseigner `ZOYA_PUBLIC_DISPLAY_AUTHORIZED`.
+Documentation : https://developer.zoya.finance/docs
+
+Le sandbox Zoya est **délibérément refusé** en production : ses résultats sont
+randomisés et ne peuvent servir à donner un verdict halal. Zoya Basic ne couvre
+que les actions américaines ; pour les actions françaises/internationales et les
+ETF, prévoir une intégration supplémentaire et une formule adaptée. Les cours et
+ratios financiers ne sont pas fournis par ce mode Zoya Basic : l'interface affiche
+leur absence, sans inventer de chiffres. L'analyse ETF détaillée reste liée à FMP.
+
+La clé doit être saisie dans les variables d'environnement **Render**,
+jamais dans le code GitHub ni dans une variable `VITE_`.
