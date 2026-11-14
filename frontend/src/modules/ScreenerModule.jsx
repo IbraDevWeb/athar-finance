@@ -70,7 +70,7 @@ export default function ScreenerModule({ autoSearch }) {
 
   // --- CALCUL DU SCORE (ETOILES) ---
   const calculateScore = (res) => {
-    if (!res) return 0;
+    if (!res || res.source === "Zoya") return null;
     let score = 0;
     
     // 1. Conformité (Le plus important)
@@ -134,6 +134,9 @@ export default function ScreenerModule({ autoSearch }) {
   const handleSearch = () => fetchAnalysis(ticker);
   
   const score = calculateScore(result);
+  const status = result?.compliance?.status;
+  const favorable = status === 'compliant' || status === 'potentially_compliant';
+  const failed = result?.compliance?.business_check?.failed;
 
   return (
     <div className="animate-fade-in max-w-6xl mx-auto pb-20">
@@ -254,6 +257,7 @@ export default function ScreenerModule({ autoSearch }) {
                         <span className="px-3 py-1 bg-gray-200 dark:bg-white/10 rounded text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">
                             {result.ticker}
                         </span>
+                        {result.source && <span className="text-xs text-gray-400">Source : {result.source}</span>}
                         <span className="text-xs text-gray-400">{result.sector || "Secteur Inconnu"}</span>
                     </div>
                     <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white mb-1">
@@ -281,14 +285,14 @@ export default function ScreenerModule({ autoSearch }) {
 
                 {/* VERDICT */}
                 <div className={`px-8 py-4 rounded-2xl border-2 flex items-center gap-4 shadow-lg ${
-                    result.compliance?.status === 'potentially_compliant'
+                    favorable
                         ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500 text-emerald-600 dark:text-emerald-400'
                         : result.compliance?.status === 'indeterminate' ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-500 text-amber-700 dark:text-amber-400' : 'bg-red-50 dark:bg-red-900/10 border-red-500 text-red-600 dark:text-red-400'
                 }`}>
-                    {result.compliance?.status === 'potentially_compliant' ? <CheckCircle size={32} /> : <AlertTriangle size={32} />}
+                    {favorable ? <CheckCircle size={32} /> : <AlertTriangle size={32} />}
                     <div className="text-left">
-                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Filtrage indicatif</p>
-                        <p className="text-lg font-bold font-display">{result.compliance?.status === "potentially_compliant" ? "Favorable*" : result.compliance?.status === "indeterminate" ? "À vérifier" : "Critères non remplis"}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">{result.source === 'Zoya' ? 'Rapport AAOIFI · Zoya' : 'Filtrage indicatif'}</p>
+                        <p className="text-lg font-bold font-display">{status === 'compliant' ? 'Conforme selon Zoya' : status === 'potentially_compliant' ? 'Favorable*' : status === 'indeterminate' ? 'À vérifier' : 'Critères non remplis'}</p>
                     </div>
                 </div>
             </div>
@@ -296,8 +300,15 @@ export default function ScreenerModule({ autoSearch }) {
             {/* CONTENU ANALYSE */}
             <div className="p-6 md:p-10">
                 <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
-                    <BarChart3 size={16} /> Analyse Financière (AAOIFI)
+                    <BarChart3 size={16} /> Analyse financière et conformité
                 </h3>
+                {result.source === 'Zoya' && (
+                  <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-900/10 dark:text-amber-200">
+                    Statut issu du rapport Zoya{result.report_date ? ` du ${new Date(result.report_date).toLocaleDateString('fr-FR')}` : ''}. La formule Basic ne fournit pas ici les ratios détaillés, ni le cours de l'action.
+                    {result.purification_ratio != null && <span className="block mt-2">Ratio de purification déclaré : {(result.purification_ratio * 100).toFixed(2)} %.</span>}
+                    <span className="block mt-2"><a className="underline font-semibold" href="https://zoya.finance/api" target="_blank" rel="noreferrer">Données fournies par Zoya</a>.</span>
+                  </p>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                     <GaugeCard 
@@ -345,15 +356,15 @@ export default function ScreenerModule({ autoSearch }) {
                                 <span className="text-sm text-gray-500">Industrie</span>
                                 <span className="text-sm font-bold text-gray-800 dark:text-white truncate max-w-[200px]">{result.industry}</span>
                             </div>
-                            <div className={`p-4 rounded-xl border ${result.compliance?.business_check?.failed ? 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300'}`}>
+                            <div className={`p-4 rounded-xl border ${failed === true ? 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300'}`}>
                                 <p className="text-xs font-bold uppercase mb-1 flex items-center gap-2">
-                                    {result.compliance?.business_check?.failed ? <AlertTriangle size={12}/> : <ShieldCheck size={12}/>}
+                                    {failed === false ? <ShieldCheck size={12}/> : <AlertTriangle size={12}/>}
                                     Screener Sectoriel
                                 </p>
                                 <p className="text-sm">
-                                    {result.compliance?.business_check?.failed 
-                                        ? `Activité illicite détectée : ${result.compliance.business_check.found_keywords.join(', ')}`
-                                        : "Aucune activité illicite majeure détectée."}
+                                    {failed === true
+                                        ? `Termes d'activité interdite détectés : ${result.compliance.business_check.found_keywords.join(', ')}`
+                                        : failed === false ? "Aucun terme interdit détecté par le filtre partiel." : "Détail du filtrage d'activité non fourni par cette formule."}
                                 </p>
                             </div>
                         </div>
@@ -378,7 +389,7 @@ export default function ScreenerModule({ autoSearch }) {
                            />
                            <MetricBox 
                                 label="Dividende" 
-                                value={result.technicals?.dividend_yield ? `${result.technicals.dividend_yield}%` : "0%"} 
+                                value={result.technicals?.dividend_yield != null ? `${result.technicals.dividend_yield}%` : "N/A"} 
                                 isGood={result.technicals?.dividend_yield > 1.5}
                                 tooltip="Rendement annuel reversé aux actionnaires en % du prix de l'action."
                            />
@@ -387,7 +398,7 @@ export default function ScreenerModule({ autoSearch }) {
                            <div className="p-3 bg-white dark:bg-black/20 rounded-xl border border-gray-100 dark:border-white/5 flex flex-col justify-center">
                                <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Qualité Globale</p>
                                <div className="flex text-brand-gold text-lg">
-                                   {[...Array(5)].map((_, i) => (
+                                   {score == null ? <span className="text-xs text-slate-500">Non disponible</span> : [...Array(5)].map((_, i) => (
                                        <span key={i} className={i < score ? "text-brand-gold" : "text-gray-300 dark:text-gray-700"}>
                                            ★
                                        </span>
@@ -418,13 +429,13 @@ function GaugeCard({ label, value, limit, isGood }) {
         <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/5 relative overflow-hidden group flex flex-col justify-between h-full">
             <div className="flex justify-between items-end mb-3 relative z-10">
                 <span className="text-[10px] font-bold uppercase text-gray-500">{label}</span>
-                <span className={`text-xl font-mono font-bold ${isGood ? 'text-emerald-500' : 'text-red-500'}`}>
+                <span className={`text-xl font-mono font-bold ${value == null ? 'text-slate-500' : isGood ? 'text-emerald-500' : 'text-red-500'}`}>
                     {value == null ? 'Non disponible' : `${value}%`}
                 </span>
             </div>
             <div className="h-2 w-full bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden relative z-10 mb-2">
                 <div 
-                    className={`h-full rounded-full transition-all duration-1000 ${isGood ? 'bg-emerald-500' : 'bg-red-500'}`}
+                    className={`h-full rounded-full transition-all duration-1000 ${value == null ? 'bg-slate-400' : isGood ? 'bg-emerald-500' : 'bg-red-500'}`}
                     style={{ width: `${percent}%` }}
                 ></div>
             </div>

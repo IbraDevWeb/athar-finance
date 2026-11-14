@@ -8,6 +8,7 @@ import os
 import re
 import requests
 from flask import Blueprint, jsonify, request
+from api.routes.zoya_provider import analyze_zoya_symbol
 
 screening_bp = Blueprint("screening", __name__)
 FMP_BASE = "https://financialmodelingprep.com/stable"
@@ -75,6 +76,13 @@ def symbols_from_body(body):
 
 
 def analyze_symbol(symbol):
+    provider = os.getenv("SCREENING_PROVIDER", "").strip().lower()
+    if not provider:
+        provider = "zoya" if os.getenv("ZOYA_API_KEY", "").strip() else "fmp"
+    if provider == "zoya":
+        return analyze_zoya_symbol(symbol)
+    if provider != "fmp":
+        return None, ("SCREENING_PROVIDER doit être fmp ou zoya.", 503)
     profile_data, error = fmp_get("/profile", {"symbol": symbol})
     if error:
         return None, error
@@ -121,6 +129,7 @@ def analyze_symbol(symbol):
 
     return {
         "ticker": symbol,
+        "source": "FMP",
         "name": profile.get("companyName") or symbol,
         "price": round(price, 2) if price is not None else None,
         "currency": profile.get("currency") or None,

@@ -1,3 +1,4 @@
+import os
 import sys
 import unittest
 from pathlib import Path
@@ -56,6 +57,60 @@ class ApiSmokeTests(unittest.TestCase):
         self.assertEqual(len(response.json["results"]), 2)
         self.assertEqual(response.json["results"][0]["compliance"]["status"], "potentially_compliant")
         self.assertEqual(response.json["results"][0]["technicals"]["roe"], 12)
+
+
+    @patch.dict(os.environ, {"SCREENING_PROVIDER": "zoya", "ZOYA_API_KEY": "sandbox-test",
+                              "ZOYA_PUBLIC_DISPLAY_AUTHORIZED": "true"})
+    def test_zoya_rejects_sandbox_key(self):
+        response = self.client.post("/api/screening/analyze", json={"tickers": "AAPL"})
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("sandbox", response.json["error"])
+
+    @patch.dict(os.environ, {"SCREENING_PROVIDER": "zoya", "ZOYA_API_KEY": "live-test",
+                              "ZOYA_PUBLIC_DISPLAY_AUTHORIZED": "false"})
+    def test_zoya_requires_public_display_authorization(self):
+        response = self.client.post("/api/screening/analyze", json={"tickers": "AAPL"})
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("autorisation", response.json["error"])
+
+    @patch("api.routes.zoya_provider.requests.post")
+    @patch.dict(os.environ, {"SCREENING_PROVIDER": "zoya", "ZOYA_API_KEY": "live-test",
+                              "ZOYA_PUBLIC_DISPLAY_AUTHORIZED": "true"})
+    def test_zoya_compliant_mapping_and_safe_missing_fields(self, post):
+        post.return_value.status_code = 200
+        post.return_value.json.return_value = {"data": {"basicCompliance": {"report": {
+            "symbol": "AAPL", "name": "Apple Inc.", "exchange": "XNAS",
+            "status": "COMPLIANT", "reportDate": "2026-08-07T00:00:00.000Z",
+            "purificationRatio": 0.01,
+        }}}}
+        response = self.client.post("/api/screening/analyze", json={"tickers": "AAPL"})
+        self.assertEqual(response.status_code, 200)
+        item = response.json["results"][0]
+        self.assertEqual(item["source"], "Zoya")
+        self.assertEqual(item["compliance"]["status"], "compliant")
+        self.assertIsNone(item["price"])
+        self.assertIsNone(item["ratios"]["debt_ratio"])
+        self.assertTrue(post.call_args.kwargs["headers"]["Authorization"].startswith("live-"))
+
+    @patch("api.routes.zoya_provider.requests.post")
+    @patch.dict(os.environ, {"SCREENING_PROVIDER": "zoya", "ZOYA_API_KEY": "live-test",
+                              "ZOYA_PUBLIC_DISPLAY_AUTHORIZED": "true"})
+    def test_zoya_unrated_does_not_claim_halal(self, post):
+        post.return_value.status_code = 200
+        post.return_value.json.return_value = {"data": {"basicCompliance": {"report": {
+            "symbol": "MSFT", "name": "Microsoft", "status": "UNRATED",
+        }}}}
+        response = self.client.post("/api/screening/analyze", json={"tickers": "MSFT"})
+        item = response.json["results"][0]
+        self.assertEqual(item["compliance"]["status"], "indeterminate")
+        self.assertIsNone(item["compliance"]["is_halal"])
+
+    @patch.dict(os.environ, {"SCREENING_PROVIDER": "zoya", "ZOYA_API_KEY": "live-test",
+                              "ZOYA_PUBLIC_DISPLAY_AUTHORIZED": "true"})
+    def test_zoya_basic_refuses_french_stock_identifiers(self):
+        response = self.client.post("/api/screening/analyze", json={"tickers": "MC.PA"})
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("couverture", str(response.json))
 
     def test_news_normalization_new_payload(self):
         result = normalize_item({
