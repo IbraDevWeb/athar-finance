@@ -15,6 +15,7 @@ export default function ComparatorModule() {
   const [dataA, setDataA] = useState(null);
   const [dataB, setDataB] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [radarData, setRadarData] = useState([]);
   const [scores, setScores] = useState({ A: 0, B: 0 });
 
@@ -22,17 +23,20 @@ export default function ComparatorModule() {
     e.preventDefault();
     if (!tickerA || !tickerB) return;
     setLoading(true);
+    setError('');
+    setDataA(null);
+    setDataB(null);
     
     try {
       const [resA, resB] = await Promise.all([
         fetch(`${API_URL}/screening/analyze`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ tickers: tickerA })
-        }).then(r => r.json()),
+        }).then(async r => { const body = await r.json(); if (!r.ok) throw new Error(body.error || 'Erreur d’analyse'); return body; }),
         fetch(`${API_URL}/screening/analyze`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ tickers: tickerB })
-        }).then(r => r.json())
+        }).then(async r => { const body = await r.json(); if (!r.ok) throw new Error(body.error || 'Erreur d’analyse'); return body; })
       ]);
 
       if (resA.results?.[0] && resB.results?.[0]) {
@@ -72,9 +76,11 @@ export default function ComparatorModule() {
              A: Math.round((sA.roe + sA.safe + sA.div + sA.value + sA.halal) / 5),
              B: Math.round((sB.roe + sB.safe + sB.div + sB.value + sB.halal) / 5)
           });
+      } else {
+        setError('Aucun résultat exploitable pour cette comparaison.');
       }
     } catch (err) {
-      console.error(err);
+      setError(err.message || 'Comparaison indisponible.');
     } finally {
       setLoading(false);
     }
@@ -130,6 +136,7 @@ export default function ComparatorModule() {
             </button>
         </div>
       </form>
+      {error && <p role="alert" className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-100">{error}</p>}
 
       {/* RÉSULTATS DUEL */}
       {dataA && dataB && (
