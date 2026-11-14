@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, CircleAlert, Heart, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowRight, AlertCircle, Heart, RefreshCw, Trash2 } from 'lucide-react';
 import { apiRequest } from '../services/api';
 
 const readWatchlist = () => {
@@ -47,7 +47,7 @@ export default function WatchlistModule({ onAnalyze }) {
       <div className="flex items-center gap-3"><div className="athar-tool-icon flex h-12 w-12 items-center justify-center rounded-xl"><Heart size={22}/></div><div><h2 className="text-xl font-semibold">Ma liste de suivi</h2><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{favorites.length} actif(s) conservé(s) localement</p></div></div>
       <button className="athar-icon-button" disabled={!favorites.length || loading} onClick={() => setRevision(x => x + 1)} aria-label="Actualiser la liste" title="Actualiser"><RefreshCw size={17} className={loading ? 'animate-spin' : ''}/></button>
     </section>
-    {error && <p role="status" className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-100"><CircleAlert size={18}/>{error}</p>}
+    {error && <p role="status" className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-100"><AlertCircle size={18}/>{error}</p>}
     {!favorites.length ? <div className="athar-panel p-12 text-center"><Heart size={32} className="mx-auto mb-4 text-brand-gold"/><h3 className="font-semibold">Aucun actif suivi</h3><p className="mt-2 text-sm text-slate-500">Ajoutez des entreprises depuis l’analyse des actifs.</p><button onClick={() => onAnalyze('')} className="athar-primary-button mt-6">Ouvrir l’analyse <ArrowRight size={16}/></button></div> :
       <div className="grid gap-4 md:grid-cols-2">
         {favorites.map(symbol => {

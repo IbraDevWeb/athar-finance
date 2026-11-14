@@ -12,7 +12,7 @@ export default function ScreenerModule({ autoSearch }) {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [savedTickers, setSavedTickers] = useState(() => { try { return JSON.parse(localStorage.getItem('myWatchlist') || '[]'); } catch { return []; } });
+  const [savedTickers, setSavedTickers] = useState(() => { try { const v = JSON.parse(localStorage.getItem('myWatchlist') || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } });
   const toggleWatchlist = (symbol) => {
     const next = savedTickers.includes(symbol) ? savedTickers.filter(t => t !== symbol) : [...savedTickers, symbol];
     setSavedTickers(next);
@@ -145,10 +145,10 @@ export default function ScreenerModule({ autoSearch }) {
             <span className="text-[10px] font-bold uppercase tracking-widest">Moteur de Recherche Islamique</span>
         </div>
         <h1 className="text-3xl md:text-5xl font-display font-bold text-gray-900 dark:text-white">
-          Screener Pro <span className="text-brand-gold">&</span> Multi-Actifs
+          Analyse financière <span className="text-brand-gold">&</span> critères
         </h1>
         <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
-          Analysez la conformité charia de 5000+ actifs. 
+          Étudiez les données financières et les principaux critères de filtrage. 
           <span className="hidden md:inline"> Actions, ETFs et Matières Premières Physiques.</span>
         </p>
       </div>
@@ -285,10 +285,10 @@ export default function ScreenerModule({ autoSearch }) {
                         ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500 text-emerald-600 dark:text-emerald-400'
                         : result.compliance?.status === 'indeterminate' ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-500 text-amber-700 dark:text-amber-400' : 'bg-red-50 dark:bg-red-900/10 border-red-500 text-red-600 dark:text-red-400'
                 }`}>
-                    {result.compliance?.is_halal ? <CheckCircle size={40} /> : <AlertTriangle size={40} />}
+                    {result.compliance?.status === 'potentially_compliant' ? <CheckCircle size={32} /> : <AlertTriangle size={32} />}
                     <div className="text-left">
                         <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Filtrage indicatif</p>
-                        <p className="text-3xl font-bold font-display">{result.compliance?.status === "potentially_compliant" ? "Favorable*" : result.compliance?.status === "indeterminate" ? "À vérifier" : "Critères non remplis"}</p>
+                        <p className="text-lg font-bold font-display">{result.compliance?.status === "potentially_compliant" ? "Favorable*" : result.compliance?.status === "indeterminate" ? "À vérifier" : "Critères non remplis"}</p>
                     </div>
                 </div>
             </div>
@@ -413,7 +413,7 @@ export default function ScreenerModule({ autoSearch }) {
 // --- SOUS-COMPOSANTS ---
 
 function GaugeCard({ label, value, limit, isGood }) {
-    const percent = Math.min((value / (limit * 1.5)) * 100, 100); 
+    const percent = value == null ? 0 : Math.min((value / (limit * 1.5)) * 100, 100); 
     return (
         <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/5 relative overflow-hidden group flex flex-col justify-between h-full">
             <div className="flex justify-between items-end mb-3 relative z-10">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Search, Wallet, BookOpen, Scale, TrendingUp, Heart, Calculator, House, Layers, ChartNoAxesCombined, ArrowLeftRight, Sprout } from 'lucide-react';
+import { LayoutDashboard, Search, Wallet, BookOpen, Scale, TrendingUp, Heart, Calculator, Home as House, Layers, Activity, ArrowLeftRight, Sparkles } from 'lucide-react';
 
 export const NAV_GROUPS = [
   { label: 'Vue générale', items: [
@@ -9,7 +9,7 @@ export const NAV_GROUPS = [
   ]},
   { label: 'Marchés & analyses', items: [
     { id: 'screener', label: 'Analyse des actifs', icon: Search },
-    { id: 'chart', label: 'Cours & graphiques', icon: ChartNoAxesCombined },
+    { id: 'chart', label: 'Cours & graphiques', icon: Activity },
     { id: 'comparator', label: 'Comparateur', icon: Scale },
     { id: 'etf', label: 'Analyse ETF', icon: Layers },
   ]},
@@ -21,7 +21,7 @@ export const NAV_GROUPS = [
   ]},
   { label: 'Apprendre', items: [
     { id: 'academy', label: 'Académie', icon: BookOpen },
-    { id: 'ihsan-data', label: 'Jardin des vertueux', icon: Sprout },
+    { id: 'ihsan-data', label: 'Jardin des vertueux', icon: Sparkles },
   ]},
 ];
 

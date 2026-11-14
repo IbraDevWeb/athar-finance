@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, ChartPie, CircleAlert, Layers, Search } from 'lucide-react';
+import { ArrowRight, PieChart, AlertCircle, Layers, Search } from 'lucide-react';
 import { screeningService } from '../services/api';
 
 export default function EtfXrayModule() {
@@ -35,7 +35,7 @@ export default function EtfXrayModule() {
         <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Certaines données de composition nécessitent un abonnement fournisseur. Une donnée manquante n’est jamais estimée.</p>
       </div>
 
-      {error && <div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100"><CircleAlert size={18} />{error}</div>}
+      {error && <div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100"><AlertCircle size={18} />{error}</div>}
       {result && (
         <div className="space-y-6 animate-fade-in">
           <div className="athar-panel flex flex-wrap items-start justify-between gap-4 p-6 sm:p-8">
@@ -50,7 +50,7 @@ export default function EtfXrayModule() {
               </div>)}</div> : <p className="rounded-lg bg-slate-50 p-5 text-sm text-slate-500 dark:bg-white/5 dark:text-slate-300">{result.holdings_notice || 'Positions non communiquées par la source.'}</p>}
             </section>
             <section className="athar-panel p-6">
-              <div className="mb-5 flex items-center gap-2"><ChartPie size={18} className="text-brand-gold" /><h3 className="font-semibold">Répartition sectorielle</h3></div>
+              <div className="mb-5 flex items-center gap-2"><PieChart size={18} className="text-brand-gold" /><h3 className="font-semibold">Répartition sectorielle</h3></div>
               {result.sectors?.length ? <div className="space-y-5">{result.sectors.map((s, i) => <div key={i}>
                 <div className="mb-2 flex justify-between gap-4 text-sm"><span className="truncate">{s.name}</span><span className="font-semibold tabular-nums">{s.value.toFixed(2)}%</span></div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"><div className="h-full rounded-full bg-[#2b6074]" style={{ width: `${Math.max(0, Math.min(100, s.value))}%` }} /></div>

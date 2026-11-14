@@ -45,17 +45,17 @@ export default function ComparatorModule() {
           // Normalisation des scores (0-100) pour le graphique
           const sA = {
              roe: Math.min(Math.max((Number(A.technicals?.roe) || 0) * 2, 0), 100),
-             safe: Math.min(Math.max((100 - (Number(A.ratios?.debt_ratio) || 0)), 0), 100),
+             safe: Math.min(Math.max((100 - (Number(A.ratios?.debt_ratio) || 100)), 0), 100),
              div: Math.min((Number(A.technicals?.dividend_yield) || 0) * 15, 100),
-             value: Math.min(Math.max(100 - ((Number(A.technicals?.per) || 0) * 1.5), 0), 100),
+             value: Math.min(Math.max(100 - ((Number(A.technicals?.per) || 100) * 1.5), 0), 100),
              halal: A.compliance.is_halal ? 100 : 0
           };
 
           const sB = {
              roe: Math.min(Math.max((Number(B.technicals?.roe) || 0) * 2, 0), 100),
-             safe: Math.min(Math.max((100 - (Number(B.ratios?.debt_ratio) || 0)), 0), 100),
+             safe: Math.min(Math.max((100 - (Number(B.ratios?.debt_ratio) || 100)), 0), 100),
              div: Math.min((Number(B.technicals?.dividend_yield) || 0) * 15, 100),
-             value: Math.min(Math.max(100 - ((Number(B.technicals?.per) || 0) * 1.5), 0), 100),
+             value: Math.min(Math.max(100 - ((Number(B.technicals?.per) || 100) * 1.5), 0), 100),
              halal: B.compliance.is_halal ? 100 : 0
           };
 
@@ -191,14 +191,14 @@ export default function ComparatorModule() {
                   
                   <ComparisonRow 
                       label="Prix" 
-                      valA={dataA.price + ' $'} 
-                      valB={dataB.price + ' $'} 
+                      valA={(dataA.price == null ? '—' : dataA.price + ' ' + (dataA.currency || ''))} 
+                      valB={(dataB.price == null ? '—' : dataB.price + ' ' + (dataB.currency || ''))} 
                   />
                   <ComparisonRow 
                       label="Conformité" 
-                      valA={dataA.compliance.is_halal ? 'HALAL' : 'HARAM'} 
-                      valB={dataB.compliance.is_halal ? 'HALAL' : 'HARAM'} 
-                      winner={dataA.compliance.is_halal === dataB.compliance.is_halal ? 'draw' : (dataA.compliance.is_halal ? 'A' : 'B')}
+                      valA={dataA.compliance.status === 'potentially_compliant' ? 'Favorable*' : dataA.compliance.status === 'indeterminate' ? 'À vérifier' : 'Critères non remplis'} 
+                      valB={dataB.compliance.status === 'potentially_compliant' ? 'Favorable*' : dataB.compliance.status === 'indeterminate' ? 'À vérifier' : 'Critères non remplis'} 
+                      winner={'draw'}
                   />
                   <ComparisonRow 
                       label="Rentabilité (ROE)" 

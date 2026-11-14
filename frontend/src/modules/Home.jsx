@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ArrowRight, ArrowUpRight, ArrowDownRight, BarChart3, BookOpen, ChartNoAxesCombined, CircleAlert, RefreshCw, Scale, Search, ShieldCheck, Wallet, Sprout } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, ArrowDownRight, BarChart3, BookOpen, Activity, AlertCircle, RefreshCw, Scale, Search, ShieldCheck, Wallet, Sparkles } from 'lucide-react';
 import { API_URL } from '../services/api';
 import { WISDOMS } from './ihsanData';
 
 const quickActions = [
   { id: 'screener', title: 'Analyser un actif', description: 'Finances et conformité', icon: Search },
-  { id: 'chart', title: 'Suivre les marchés', description: 'Cours et graphiques', icon: ChartNoAxesCombined },
+  { id: 'chart', title: 'Suivre les marchés', description: 'Cours et graphiques', icon: Activity },
   { id: 'comparator', title: 'Comparer deux actions', description: 'Indicateurs côte à côte', icon: Scale },
   { id: 'simulator', title: 'Préparer un projet', description: 'Épargne et projections', icon: BarChart3 },
 ];
@@ -75,7 +75,7 @@ export default function Home({ onNavigate }) {
       </section>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <OverviewCard label="Marchés suivis" value={loading ? '—' : String(quotes.length)} helper="Cotations disponibles" icon={ChartNoAxesCombined} />
+        <OverviewCard label="Marchés suivis" value={loading ? '—' : String(quotes.length)} helper="Cotations disponibles" icon={Activity} />
         <OverviewCard label="Votre liste de suivi" value={String(watchlistCount)} helper="Actifs enregistrés sur cet appareil" icon={Wallet} />
         <OverviewCard label="Outils d’analyse" value="13" helper="Rubriques accessibles" icon={ShieldCheck} />
       </div>
@@ -109,7 +109,7 @@ export default function Home({ onNavigate }) {
                 </span>
               </div>
             ))}
-            {error && <div role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-400/10 dark:text-amber-200"><CircleAlert size={16} className="mt-0.5 shrink-0" />{error}{quotes.length > 0 ? ' · Dernières données reçues affichées.' : ''}</div>}
+            {error && <div role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-400/10 dark:text-amber-200"><AlertCircle size={16} className="mt-0.5 shrink-0" />{error}{quotes.length > 0 ? ' · Dernières données reçues affichées.' : ''}</div>}
             {!loading && !quotes.length && !error && <p className="p-6 text-center text-sm text-slate-500">Aucune cotation disponible.</p>}
           </div>
           <button onClick={() => onNavigate('chart')} className="flex w-full items-center justify-between border-t border-slate-100 px-6 py-4 text-xs font-semibold text-brand-gold transition-colors hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5">
@@ -124,7 +124,7 @@ export default function Home({ onNavigate }) {
           </div>
           <div className="flex flex-1 flex-col justify-between gap-8 p-6">
             {wisdom ? <div>
-              <Sprout size={25} strokeWidth={1.5} className="mb-7 text-brand-gold" />
+              <Sparkles size={25} strokeWidth={1.5} className="mb-7 text-brand-gold" />
               <p className="text-right font-serif text-[23px] leading-loose" dir="rtl">{wisdom.arabic}</p>
               <p className="mt-6 text-sm leading-7 text-slate-600 dark:text-slate-300">« {wisdom.french} »</p>
               <p className="mt-4 text-xs font-semibold text-brand-gold">{wisdom.author}</p>

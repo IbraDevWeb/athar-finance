@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowUpRight, CircleAlert, Plus, RefreshCw, Trash2, Wallet } from 'lucide-react';
+import { ArrowUpRight, AlertCircle, Plus, RefreshCw, Trash2, Wallet } from 'lucide-react';
 import { apiRequest } from '../services/api';
 
 const initialPositions = () => {
@@ -67,7 +67,7 @@ export default function PortfolioModule() {
         </form>
         <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">Saisissez les prix d’achat dans la devise de cotation de chaque actif. Les montants ne sont pas convertis entre devises.</p>
       </div>
-      {error && <div role="alert" className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-100"><CircleAlert size={18}/>{error}</div>}
+      {error && <div role="alert" className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-100"><AlertCircle size={18}/>{error}</div>}
 
       {result && Object.keys(result.totals_by_currency || {}).length > 0 && <div className="grid gap-3 sm:grid-cols-3">
         {Object.entries(result.totals_by_currency).map(([currency, total]) => <div key={currency} className="athar-panel p-6"><p className="text-xs text-slate-500 dark:text-slate-400">Valeur estimée · {currency}</p><p className="mt-2 text-2xl font-semibold tabular-nums">{displayNumber(total)} <span className="text-sm">{currency}</span></p></div>)}
