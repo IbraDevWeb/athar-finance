@@ -75,7 +75,7 @@ class SimulationService:
                 continue
 
         # Calculs finaux
-        purification = total_dividends * 0.05 # 5% de sadaqah sur dividendes
+        purification = None  # Pas de taux de purification automatique fiable.
         total_gain = (total_current_value + total_dividends) - total_invested
         total_return = (total_gain / total_invested) * 100 if total_invested > 0 else 0
 
@@ -86,7 +86,8 @@ class SimulationService:
             "total_invested": round(total_invested, 2),
             "final_value": round(total_current_value, 2),
             "dividends": round(total_dividends, 2),
-            "purification": round(purification, 2),
+            "dividends_are_approximate": True,
+            "purification": purification,
             "total_gain": round(total_gain, 2),
             "total_return": round(total_return, 2),
             "breakdown": portfolio_breakdown

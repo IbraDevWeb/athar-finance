@@ -15,3 +15,13 @@ def calculate():
         return jsonify(success=False, error=str(error)), 400
     except Exception:
         return jsonify(success=False, error="Calcul temporairement indisponible."), 503
+
+
+@zakat_bp.get("/metals")
+def metals():
+    try:
+        return jsonify(service.get_metal_prices())
+    except ValueError as error:
+        return jsonify(error=str(error)), 503
+    except Exception:
+        return jsonify(error="Cours des métaux indisponibles."), 503
