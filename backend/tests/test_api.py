@@ -110,7 +110,7 @@ class ApiSmokeTests(unittest.TestCase):
     def test_zoya_basic_refuses_french_stock_identifiers(self):
         response = self.client.post("/api/screening/analyze", json={"tickers": "MC.PA"})
         self.assertEqual(response.status_code, 404)
-        self.assertIn("couverture", str(response.json))
+        self.assertIn("couvre", str(response.json))
 
     def test_news_normalization_new_payload(self):
         result = normalize_item({
