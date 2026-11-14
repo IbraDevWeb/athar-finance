@@ -1,62 +1,53 @@
+"""Normalize both legacy and newer yfinance news payloads."""
+from datetime import datetime, timezone
 from flask import Blueprint, jsonify
 import yfinance as yf
-from datetime import datetime
-import logging
 
-news_bp = Blueprint('news', __name__)
+news_bp = Blueprint("news", __name__)
+TICKERS = {"GC=F": "Or", "SI=F": "Argent", "^GSPC": "S&P 500", "ISDW.L": "Finance islamique"}
 
-def get_news_for_ticker(ticker_symbol):
-    try:
-        ticker = yf.Ticker(ticker_symbol)
-        # ticker.news est une liste de dictionnaires
-        return ticker.news if ticker.news else []
-    except Exception as e:
-        logging.error(f"Erreur News pour {ticker_symbol}: {e}")
-        return []
 
-@news_bp.route('/latest', methods=['GET'])
-def get_market_news():
-    assets = {
-        "GC=F": "Or",
-        "SI=F": "Argent", 
-        "BTC-USD": "Bitcoin", 
-        "^GSPC": "S&P 500"
+def normalize_item(item, label):
+    article = item.get("content") or item
+    title = article.get("title")
+    link = article.get("link") or (article.get("canonicalUrl") or {}).get("url") or (article.get("clickThroughUrl") or {}).get("url")
+    if not title or not link or not link.startswith(("http://", "https://")):
+        return None
+    provider = article.get("provider")
+    provider = provider.get("displayName") if isinstance(provider, dict) else (provider or item.get("publisher"))
+    published = article.get("pubDate") or article.get("displayTime")
+    timestamp = item.get("providerPublishTime") or 0
+    if published:
+        try:
+            timestamp = int(datetime.fromisoformat(published.replace("Z", "+00:00")).timestamp())
+        except (ValueError, TypeError):
+            pass
+    thumb = article.get("thumbnail") or item.get("thumbnail") or {}
+    resolutions = thumb.get("resolutions") or []
+    img = (resolutions[0].get("url") if resolutions else (thumb.get("originalUrl") or None))
+    date = datetime.fromtimestamp(timestamp, tz=timezone.utc).strftime("%d/%m/%Y %H:%M UTC") if timestamp else ""
+    return {
+        "title": title,
+        "publisher": provider or "Source non précisée",
+        "link": link,
+        "date": date,
+        "timestamp": timestamp,
+        "asset_label": label,
+        "thumbnail": img,
+        "summary": article.get("summary") or "",
     }
-    
-    all_news = []
-    seen_titles = set()
 
-    for symbol, label in assets.items():
-        news_items = get_news_for_ticker(symbol)
-        
-        for item in news_items:
-            title = item.get('title')
-            if title and title not in seen_titles:
-                seen_titles.add(title)
-                
-                publish_time = item.get('providerPublishTime', 0)
-                date_obj = datetime.fromtimestamp(publish_time)
-                
-                # Récupération de l'image si elle existe
-                thumbnail = item.get('thumbnail', {})
-                img_url = None
-                if thumbnail and 'resolutions' in thumbnail:
-                    # On prend la résolution la plus haute disponible
-                    img_url = thumbnail['resolutions'][0].get('url')
 
-                all_news.append({
-                    "title": title,
-                    "publisher": item.get('publisher'),
-                    "link": item.get('link'),
-                    "date": date_obj.strftime("%d/%m %H:%M"),
-                    "timestamp": publish_time,
-                    "asset_label": label,
-                    "thumbnail": img_url,
-                    # Certains providers donnent un petit résumé
-                    "summary": item.get('summary', '') 
-                })
-
-    # Tri par plus récent
-    all_news.sort(key=lambda x: x['timestamp'], reverse=True)
-
-    return jsonify(all_news[:12])
+@news_bp.get("/latest")
+def latest():
+    results = {}
+    for symbol, label in TICKERS.items():
+        try:
+            items = yf.Ticker(symbol).news or []
+        except Exception:
+            continue
+        for item in items:
+            normalized = normalize_item(item, label)
+            if normalized:
+                results[normalized["link"]] = normalized
+    return jsonify(sorted(results.values(), key=lambda item: item["timestamp"], reverse=True)[:12])

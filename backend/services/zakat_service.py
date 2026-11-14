@@ -1,91 +1,65 @@
+"""Estimated zakat with explicit data-source quality.
+
+No hard-coded 'current' metal prices: when live quotes are unavailable, clients
+must provide verified EUR/gram values (gold_price_g, silver_price_g).
+"""
+import math
 import yfinance as yf
 
+TROY_OUNCE_GRAMS = 31.1034768
+
+
+def nonnegative(value, name):
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        raise ValueError("Montant invalide : " + name)
+    if not math.isfinite(parsed) or parsed < 0:
+        raise ValueError("Montant invalide : " + name)
+    return parsed
+
+
 class ZakatService:
-    """Service de calcul de la Zakat avec double Nisab (Or & Argent)"""
-
-    def get_metal_prices(self):
-        """Récupère les prix Or et Argent en EUR"""
-        # VALEURS PAR DÉFAUT (Mises à jour janv 2026 selon vos chiffres)
-        # Si le scraping échoue, on utilise ces valeurs réelles
-        prices = {
-            "gold_gram": 136.0,   # ~136€ le gramme
-            "silver_gram": 2.82,  # ~2.82€ le gramme
-            "source": "backup"    # Indique qu'on est sur les valeurs de secours
-        }
-        
+    def get_metal_prices(self, gold_override=None, silver_override=None):
+        prices = {"gold_gram": None, "silver_gram": None, "source": "yfinance"}
         try:
-            print("🏆 Tentative de connexion Yahoo Finance...")
-            # Tickers : XAUEUR=X (Or/Euro), XAGEUR=X (Argent/Euro)
-            tickers = yf.Tickers("XAUEUR=X XAGEUR=X")
-            
-            # OR (Gold) - XAU
-            if 'XAUEUR=X' in tickers.tickers:
-                history_gold = tickers.tickers['XAUEUR=X'].history(period="1d")
-                if not history_gold.empty:
-                    # Yahoo donne le prix de l'ONCE (Troy Ounce)
-                    oz_price = history_gold['Close'].iloc[-1]
-                    # 1 Once Troy = 31.1035 grammes
-                    live_price = oz_price / 31.1035
-                    
-                    # On vérifie que la donnée est cohérente (> 50€) sinon on garde le backup
-                    if live_price > 50:
-                        prices["gold_gram"] = live_price
-                        prices["source"] = "live"
-
-            # ARGENT (Silver) - XAG
-            if 'XAGEUR=X' in tickers.tickers:
-                history_silver = tickers.tickers['XAGEUR=X'].history(period="1d")
-                if not history_silver.empty:
-                    oz_price = history_silver['Close'].iloc[-1]
-                    live_price = oz_price / 31.1035
-                    
-                    if live_price > 0.5:
-                        prices["silver_gram"] = live_price
-
-        except Exception as e:
-            print(f"⚠️ Le live a échoué ({e}), utilisation des valeurs manuelles (136€/2.82€).")
-        
+            for symbol, key in [("XAUEUR=X", "gold_gram"), ("XAGEUR=X", "silver_gram")]:
+                history = yf.Ticker(symbol).history(period="5d")
+                if not history.empty:
+                    amount = float(history["Close"].dropna().iloc[-1])
+                    if math.isfinite(amount) and amount > 0:
+                        prices[key] = amount / TROY_OUNCE_GRAMS
+        except Exception:
+            pass
+        if gold_override is not None:
+            prices["gold_gram"] = nonnegative(gold_override, "gold_price_g")
+            prices["source"] = "manual"
+        if silver_override is not None:
+            prices["silver_gram"] = nonnegative(silver_override, "silver_price_g")
+            prices["source"] = "manual"
+        if not prices["gold_gram"] or not prices["silver_gram"]:
+            raise ValueError("Prix des métaux indisponibles : saisissez gold_price_g et silver_price_g (EUR/g) après vérification.")
         return prices
 
-    def calculate_zakat(self, data: dict) -> dict:
-        try:
-            # 1. Récupérer les prix (Live ou Backup)
-            metals = self.get_metal_prices()
-            
-            # 2. Calculer les deux Nisabs
-            # Nisab Or = 85 grammes
-            nisab_gold = metals["gold_gram"] * 85
-            
-            # Nisab Argent = 595 grammes
-            nisab_silver = metals["silver_gram"] * 595
-
-            # 3. Récupération des actifs utilisateur
-            cash = float(data.get('cash', 0))
-            savings = float(data.get('savings', 0))
-            stocks = float(data.get('stocks', 0))
-            crypto = float(data.get('crypto', 0))
-            gold_silver = float(data.get('gold', 0))
-            debts = float(data.get('debts', 0))
-
-            # 4. Calcul Patrimoine Net
-            total_assets = cash + savings + stocks + crypto + gold_silver
-            net_wealth = total_assets - debts
-
-            # 5. Calcul Zakat (2.5%)
-            zakat_amount = net_wealth * 0.025
-
-            return {
-                "net_wealth": round(net_wealth, 2),
-                "zakat_payable": round(zakat_amount if zakat_amount > 0 else 0, 2),
-                "nisab_data": {
-                    "gold_threshold": round(nisab_gold, 2),
-                    "silver_threshold": round(nisab_silver, 2),
-                    "gold_price_g": round(metals["gold_gram"], 2),
-                    "silver_price_g": round(metals["silver_gram"], 2),
-                    "source": metals["source"]
-                }
-            }
-
-        except Exception as e:
-            print(f"Erreur Zakat: {e}")
-            return None
+    def calculate_zakat(self, data):
+        metals = self.get_metal_prices(data.get("gold_price_g"), data.get("silver_price_g"))
+        wealth = sum(nonnegative(data.get(key, 0), key) for key in ("cash", "savings", "stocks", "crypto", "gold"))
+        debt = nonnegative(data.get("debts", 0), "debts")
+        net_wealth = max(0, wealth - debt)
+        gold_threshold = metals["gold_gram"] * 85
+        silver_threshold = metals["silver_gram"] * 595
+        # A full religious obligation depends on the lunar holding period and personal circumstances.
+        return {
+            "net_wealth": round(net_wealth, 2),
+            "zakat_payable": round(net_wealth * 0.025, 2),
+            "eligible_gold_nisab": net_wealth >= gold_threshold,
+            "eligible_silver_nisab": net_wealth >= silver_threshold,
+            "nisab_data": {
+                "gold_threshold": round(gold_threshold, 2),
+                "silver_threshold": round(silver_threshold, 2),
+                "gold_price_g": round(metals["gold_gram"], 2),
+                "silver_price_g": round(metals["silver_gram"], 2),
+                "source": metals["source"],
+            },
+            "disclaimer": "Estimation seulement ; le hawl et la méthode de calcul restent à vérifier.",
+        }

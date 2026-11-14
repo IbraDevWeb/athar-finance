@@ -1,42 +1,46 @@
+"""Best-effort delayed market quotes from Yahoo Finance via yfinance."""
+import math
 from flask import Blueprint, jsonify
 import yfinance as yf
 
-market_bp = Blueprint('market', __name__)
+market_bp = Blueprint("market", __name__)
+ASSETS = {
+    "SGLD.L": "Or physique",
+    "SSLV.L": "Argent physique",
+    "ISDW.L": "World Islamic",
+}
 
-@market_bp.route('/live-prices', methods=['GET'])
+
+@market_bp.get("/live-prices")
 def get_live_prices():
-    # Sélection Sharia Compliant
-    assets = {
-        "SGLD.L": "Or Physique",
-        "SSLV.L": "Argent Phys.",
-        "ISDW.L": "World Islamic"
-    }
-    
     results = []
-    try:
-        # On récupère tout d'un coup pour la vitesse
-        tickers = yf.Tickers(' '.join(assets.keys()))
-        
-        for symbol, name in assets.items():
-            t = tickers.tickers[symbol]
-            hist = t.history(period="2d") # Pour calculer la variation
-            
-            if len(hist) >= 2:
-                price = hist['Close'].iloc[-1]
-                prev_price = hist['Close'].iloc[-2]
-                change = ((price - prev_price) / prev_price) * 100
-            else:
-                price = t.info.get('regularMarketPrice', 0)
-                change = 0
-
+    for symbol, name in ASSETS.items():
+        try:
+            ticker = yf.Ticker(symbol)
+            history = ticker.history(period="5d", auto_adjust=True)
+            if history.empty:
+                continue
+            closes = history["Close"].dropna()
+            if closes.empty:
+                continue
+            current = float(closes.iloc[-1])
+            previous = float(closes.iloc[-2]) if len(closes) > 1 else None
+            if not math.isfinite(current):
+                continue
+            change = ((current - previous) / previous * 100) if previous and previous > 0 else 0
+            metadata = ticker.get_history_metadata() or {}
             results.append({
                 "symbol": symbol,
                 "name": name,
-                "price": round(price, 2),
+                "price": round(current, 3),
                 "change": round(change, 2),
-                "currency": "USD" if "L" in symbol else "$"
+                "currency": metadata.get("currency") or "",
+                "as_of": closes.index[-1].isoformat(),
+                "delayed": True,
             })
-            
-        return jsonify(results)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        except Exception:
+            # A partial quote list is better than failing all tickers.
+            continue
+    if not results:
+        return jsonify(error="Cotations temporairement indisponibles."), 503
+    return jsonify(results)
