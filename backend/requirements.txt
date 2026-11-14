@@ -4,4 +4,5 @@ yfinance
 pandas
 gunicorn
 numpy
+requests>=2.31
 requests-cache

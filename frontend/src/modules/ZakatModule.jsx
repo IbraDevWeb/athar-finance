@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { apiRequest } from '../services/api';
 import { 
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend 
 } from 'recharts';
@@ -11,7 +12,17 @@ export default function ZakatModule() {
   const [activeTab, setActiveTab] = useState('maal'); // 'maal' or 'purification'
 
   // --- ÉTATS ZAKAT AL MAAL ---
-  const [goldPrice, setGoldPrice] = useState(70); 
+  const [goldPrice, setGoldPrice] = useState(0);
+  const [priceNotice, setPriceNotice] = useState('Chargement du cours de l’or…');
+  useEffect(() => {
+    let cancelled = false;
+    apiRequest('/zakat/metals').then(data => {
+      if (cancelled) return;
+      setGoldPrice(Number(data.gold_gram.toFixed(2)));
+      setPriceNotice('Cours indicatif fourni par Yahoo Finance (potentiellement différé).');
+    }).catch(() => { if (!cancelled) setPriceNotice('Cours indisponible : renseignez un prix de l’or vérifié (EUR/g).'); });
+    return () => { cancelled = true; };
+  }, []); 
   const [assets, setAssets] = useState({
     cash: 0,        // Comptes courants + Espèces
     savings: 0,     // Livrets (A, LDD...)
@@ -30,8 +41,8 @@ export default function ZakatModule() {
   const totalAssets = (assets.cash + assets.savings + assets.gold + assets.shares + assets.business);
   const netWealth = totalAssets - assets.debts;
   const zakatDue = Math.max(0, netWealth * 0.025); 
-  const isEligible = netWealth >= nissab;
-  const progression = Math.min((netWealth / (nissab * 1.5)) * 100, 100);
+  const isEligible = nissab > 0 && netWealth >= nissab;
+  const progression = nissab > 0 ? Math.min((netWealth / (nissab * 1.5)) * 100, 100) : 0;
 
   const purificationDue = dividendAmount * (impurePercent / 100);
 
@@ -85,6 +96,7 @@ export default function ZakatModule() {
         </div>
       </div>
 
+      {activeTab === 'maal' && <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-100">{priceNotice} Cette estimation ne vérifie ni le hawl ni les autres conditions religieuses.</p>}
       {/* --- SECTION 1 : ZAKAT AL MAAL --- */}
       {activeTab === 'maal' && (
           <div className="grid lg:grid-cols-12 gap-8 animate-fade-in-up">
@@ -100,7 +112,7 @@ export default function ZakatModule() {
                           </div>
                           <div>
                               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Seuil Imposable (Nissab)</p>
-                              <p className="text-3xl font-mono font-bold text-gray-900 dark:text-white">{formatMoney(nissab)}</p>
+                              <p className="text-3xl font-mono font-bold text-gray-900 dark:text-white">{nissab > 0 ? formatMoney(nissab) : 'À renseigner'}</p>
                           </div>
                       </div>
                       
@@ -110,7 +122,7 @@ export default function ZakatModule() {
                                <input 
                                   type="number" 
                                   value={goldPrice} 
-                                  onChange={(e) => setGoldPrice(Number(e.target.value))}
+                                  onChange={(e) => { setGoldPrice(Math.max(0, Number(e.target.value))); setPriceNotice('Prix saisi manuellement : à vérifier avant le calcul.'); }}
                                   className="w-full bg-transparent text-right font-mono font-bold outline-none border-b border-brand-gold/50 focus:border-brand-gold text-brand-dark dark:text-white"
                                />
                            </div>
@@ -153,16 +165,16 @@ export default function ZakatModule() {
                       {isEligible && <div className="absolute top-0 right-0 w-64 h-64 bg-brand-gold/10 rounded-full blur-[80px] pointer-events-none"></div>}
 
                       <p className="font-bold uppercase tracking-[0.2em] text-[10px] mb-4 opacity-70 relative z-10">
-                          {isEligible ? "Montant de la Zakat" : "Non Imposable"}
+                          {nissab <= 0 ? "Prix de l’or requis" : "Estimation de zakat"}
                       </p>
                       
                       <div className="text-6xl font-mono font-bold mb-6 relative z-10 tracking-tight">
-                          {isEligible ? formatMoney(zakatDue) : "0 €"}
+                          {isEligible ? formatMoney(zakatDue) : "—"}
                       </div>
                       
                       <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold relative z-10 ${isEligible ? 'bg-brand-gold text-brand-dark' : 'bg-gray-200 dark:bg-white/10 text-gray-500'}`}>
                           {isEligible ? <CheckCircle size={14}/> : <AlertCircle size={14}/>}
-                          <span>{isEligible ? "Paiement Obligatoire" : `Patrimoine < Nissab`}</span>
+                          <span>{nissab <= 0 ? "Calcul indisponible" : isEligible ? "Seuil atteint sous réserve du hawl" : "Sous le nissab or"}</span>
                       </div>
                   </div>
 

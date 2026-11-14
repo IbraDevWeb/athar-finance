@@ -1,45 +1,65 @@
-import React from 'react';
-import { Layers, Hammer, Sparkles, ArrowRight, Search } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowRight, PieChart, AlertCircle, Layers, Search } from 'lucide-react';
+import { screeningService } from '../services/api';
 
 export default function EtfXrayModule() {
+  const [ticker, setTicker] = useState('SPUS');
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const analyze = async (event) => {
+    event.preventDefault();
+    if (!ticker.trim()) return;
+    setLoading(true);
+    setError('');
+    setResult(null);
+    try {
+      setResult(await screeningService.scanEtf(ticker.trim().toUpperCase()));
+    } catch (e) { setError(e.message || 'Analyse momentanément indisponible.'); }
+    finally { setLoading(false); }
+  };
+
   return (
-    <div className="min-h-[70vh] flex flex-col items-center justify-center text-center p-8 animate-fade-in max-w-2xl mx-auto">
-      
-      {/* VISUEL CENTRAL */}
-      <div className="relative mb-10 group">
-        <div className="w-40 h-40 bg-brand-gold/10 rounded-full flex items-center justify-center relative z-10 transition-transform duration-500 group-hover:scale-110">
-           <Layers size={64} className="text-brand-gold opacity-80" />
+    <div className="mx-auto max-w-5xl space-y-6 pb-12">
+      <div className="athar-panel p-6 sm:p-8">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="athar-tool-icon flex h-12 w-12 items-center justify-center rounded-xl"><Layers size={24} /></div>
+          <div><h2 className="text-xl font-semibold">Analyse des ETF</h2><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Composition et répartition sectorielle, selon la disponibilité de FMP.</p></div>
         </div>
-        
-        <div className="absolute -bottom-4 -right-4 bg-brand-dark p-4 rounded-full shadow-xl z-20 border-4 border-[#f8f9fa] dark:border-[#050505]">
-            <Hammer size={24} className="text-brand-gold animate-pulse" />
-        </div>
-
-        <div className="absolute top-0 right-0 text-brand-gold animate-bounce opacity-50" style={{ animationDuration: '3s' }}>
-            <Sparkles size={20} />
-        </div>
+        <form onSubmit={analyze} className="flex flex-col gap-3 sm:flex-row">
+          <label htmlFor="etf-ticker" className="sr-only">Symbole du fonds</label>
+          <input id="etf-ticker" maxLength={20} value={ticker} onChange={e => setTicker(e.target.value.toUpperCase())} placeholder="Ex. : SPUS, HLAL, SPY" className="min-w-0 flex-1 rounded-lg border border-slate-200 px-4 py-3 text-sm outline-none focus:border-brand-gold" />
+          <button className="athar-primary-button" type="submit" disabled={loading}><Search size={16} /> {loading ? 'Analyse…' : 'Analyser le fonds'}</button>
+        </form>
+        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Certaines données de composition nécessitent un abonnement fournisseur. Une donnée manquante n’est jamais estimée.</p>
       </div>
 
-      {/* TEXTES */}
-      <h1 className="text-4xl md:text-5xl font-display font-bold text-brand-dark dark:text-white mb-6">
-        Construction en cours
-      </h1>
-      
-      <div className="space-y-4 text-gray-500 dark:text-gray-400 text-lg leading-relaxed max-w-lg mx-auto">
-          <p>
-              Le module <strong className="text-brand-gold">ETF X-Ray 🩻</strong> est actuellement dans notre atelier.
-          </p>
-          <p className="text-sm">
-              Nous développons un moteur de données exclusif pour vous garantir une analyse fiable. La qualité exige un peu de patience.
-          </p>
-      </div>
-
-      {/* BARRE DE PROGRESSION */}
-      <div className="w-full max-w-md h-1.5 bg-gray-200 dark:bg-white/10 rounded-full mt-10 overflow-hidden relative">
-          <div className="h-full bg-brand-gold w-3/4 rounded-full absolute top-0 left-0 animate-pulse"></div>
-          <div className="w-full h-full absolute top-0 left-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
-      </div>
-      <p className="text-xs font-bold text-brand-gold uppercase tracking-widest mt-3">Progression : 75%</p>
+      {error && <div role="alert" className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100"><AlertCircle size={18} />{error}</div>}
+      {result && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="athar-panel flex flex-wrap items-start justify-between gap-4 p-6 sm:p-8">
+            <div><p className="athar-eyebrow">{result.ticker}</p><h3 className="mt-2 text-2xl font-semibold">{result.name}</h3><p className="mt-3 max-w-3xl text-sm leading-6 text-slate-500 dark:text-slate-300">{result.description || 'Aucune description publiée par la source.'}</p></div>
+          </div>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <section className="athar-panel p-6">
+              <div className="mb-5 flex items-center gap-2"><Layers size={18} className="text-brand-gold" /><h3 className="font-semibold">Principales positions</h3></div>
+              {result.holdings?.length ? <div className="space-y-5">{result.holdings.map((h, i) => <div key={i}>
+                <div className="mb-2 flex justify-between gap-4 text-sm"><span className="truncate">{h.name}</span><span className="font-semibold tabular-nums">{h.percent.toFixed(2)}%</span></div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"><div className="h-full rounded-full bg-[#a78b5e]" style={{ width: `${Math.max(0, Math.min(100, h.percent))}%` }} /></div>
+              </div>)}</div> : <p className="rounded-lg bg-slate-50 p-5 text-sm text-slate-500 dark:bg-white/5 dark:text-slate-300">{result.holdings_notice || 'Positions non communiquées par la source.'}</p>}
+            </section>
+            <section className="athar-panel p-6">
+              <div className="mb-5 flex items-center gap-2"><PieChart size={18} className="text-brand-gold" /><h3 className="font-semibold">Répartition sectorielle</h3></div>
+              {result.sectors?.length ? <div className="space-y-5">{result.sectors.map((s, i) => <div key={i}>
+                <div className="mb-2 flex justify-between gap-4 text-sm"><span className="truncate">{s.name}</span><span className="font-semibold tabular-nums">{s.value.toFixed(2)}%</span></div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"><div className="h-full rounded-full bg-[#2b6074]" style={{ width: `${Math.max(0, Math.min(100, s.value))}%` }} /></div>
+              </div>)}</div> : <p className="rounded-lg bg-slate-50 p-5 text-sm text-slate-500 dark:bg-white/5 dark:text-slate-300">{result.sectors_notice || 'Répartition indisponible.'}</p>}
+            </section>
+          </div>
+          <p className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400"><ArrowRight size={13} /> Source : Financial Modeling Prep. Composition non garantie en temps réel. Aucun verdict de conformité automatique.</p>
+        </div>
+      )}
     </div>
   );
 }

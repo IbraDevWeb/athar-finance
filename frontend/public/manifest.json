@@ -9,7 +9,7 @@
       "purpose": "any maskable"
     },
     {
-      "src": "/logo512.png",
+      "src": "/Logo512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
@@ -17,7 +17,7 @@
   ],
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#c5a059",
-  "background_color": "#050505",
+  "theme_color": "#142130",
+  "background_color": "#f5f7f9",
   "orientation": "portrait"
 }

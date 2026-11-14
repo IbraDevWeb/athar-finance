@@ -1,16 +1,23 @@
+import { API_URL } from '../services/api';
 import React, { useState, useEffect } from 'react';
 import { 
   Search, ArrowRight, X, TrendingUp, TrendingDown, AlertTriangle, 
   CheckCircle, Activity, DollarSign, BarChart3, ShieldCheck, FileText, Info 
 } from 'lucide-react';
 
-const API_URL = 'https://athar-api.onrender.com/api';
+
 
 export default function ScreenerModule({ autoSearch }) {
   const [ticker, setTicker] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [savedTickers, setSavedTickers] = useState(() => { try { const v = JSON.parse(localStorage.getItem('myWatchlist') || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } });
+  const toggleWatchlist = (symbol) => {
+    const next = savedTickers.includes(symbol) ? savedTickers.filter(t => t !== symbol) : [...savedTickers, symbol];
+    setSavedTickers(next);
+    try { localStorage.setItem('myWatchlist', JSON.stringify(next)); } catch { /* Storage disabled. */ }
+  };
 
   // --- 1. LISTE DES PRESETS (MÉTAUX & COMMODITIES) ---
   const PRESETS = [
@@ -70,15 +77,15 @@ export default function ScreenerModule({ autoSearch }) {
     if (res.compliance?.is_halal) score += 2;
     
     // 2. Santé Financière
-    const debt = res.ratios?.debt_ratio || 100;
-    const cash = res.ratios?.cash_ratio || 0;
+    const debt = res.ratios?.debt_ratio ?? 100;
+    const cash = res.ratios?.cash_ratio ?? 100;
     
     if (debt < 30) score += 1; // Peu de dette
     if (cash < 30) score += 0.5; // Cash raisonnable
     
     // 3. Performance
-    const roe = res.technicals?.roe || 0;
-    const div = res.technicals?.dividend_yield || 0;
+    const roe = res.technicals?.roe ?? 0;
+    const div = res.technicals?.dividend_yield ?? 0;
     
     if (roe > 12) score += 1; // Bonne rentabilité
     if (div > 1.5) score += 0.5; // Bon dividende
@@ -108,7 +115,7 @@ export default function ScreenerModule({ autoSearch }) {
         body: JSON.stringify({ tickers: searchTicker })
       });
 
-      if (!response.ok) throw new Error("Erreur serveur");
+      if (!response.ok) { const failure = await response.json().catch(() => ({})); throw new Error(failure.error || 'Erreur serveur'); }
       
       const data = await response.json();
       if (data.results && data.results.length > 0) {
@@ -118,7 +125,7 @@ export default function ScreenerModule({ autoSearch }) {
       }
     } catch (err) {
       console.error(err);
-      setError("Impossible de contacter le serveur.");
+      setError(err.message || "Impossible de contacter le serveur.");
     } finally {
       setLoading(false);
     }
@@ -138,10 +145,10 @@ export default function ScreenerModule({ autoSearch }) {
             <span className="text-[10px] font-bold uppercase tracking-widest">Moteur de Recherche Islamique</span>
         </div>
         <h1 className="text-3xl md:text-5xl font-display font-bold text-gray-900 dark:text-white">
-          Screener Pro <span className="text-brand-gold">&</span> Multi-Actifs
+          Analyse financière <span className="text-brand-gold">&</span> critères
         </h1>
         <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
-          Analysez la conformité charia de 5000+ actifs. 
+          Étudiez les données financières et les principaux critères de filtrage. 
           <span className="hidden md:inline"> Actions, ETFs et Matières Premières Physiques.</span>
         </p>
       </div>
@@ -256,10 +263,10 @@ export default function ScreenerModule({ autoSearch }) {
                     {/* --- PRIX & ÉVOLUTION (MODIFIÉ) --- */}
                     <div className="flex items-center gap-4 mt-2">
                         <p className="text-3xl font-mono font-bold text-brand-gold">
-                            {result.price?.toLocaleString()} <span className="text-sm text-gray-400">$</span>
+                            {result.price?.toLocaleString() ?? '—'} <span className="text-sm text-gray-400">{result.currency || ''}</span>
                         </p>
                         
-                        {result.change_p !== undefined && (
+                        {result.change_p != null && (
                             <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold border ${
                                 result.change_p >= 0 
                                 ? 'bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-800' 
@@ -274,14 +281,14 @@ export default function ScreenerModule({ autoSearch }) {
 
                 {/* VERDICT */}
                 <div className={`px-8 py-4 rounded-2xl border-2 flex items-center gap-4 shadow-lg ${
-                    result.compliance?.is_halal
+                    result.compliance?.status === 'potentially_compliant'
                         ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                        : 'bg-red-50 dark:bg-red-900/10 border-red-500 text-red-600 dark:text-red-400'
+                        : result.compliance?.status === 'indeterminate' ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-500 text-amber-700 dark:text-amber-400' : 'bg-red-50 dark:bg-red-900/10 border-red-500 text-red-600 dark:text-red-400'
                 }`}>
-                    {result.compliance?.is_halal ? <CheckCircle size={40} /> : <AlertTriangle size={40} />}
+                    {result.compliance?.status === 'potentially_compliant' ? <CheckCircle size={32} /> : <AlertTriangle size={32} />}
                     <div className="text-left">
-                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Verdict Charia</p>
-                        <p className="text-3xl font-bold font-display">{result.compliance?.is_halal ? "HALAL" : "HARAM"}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Filtrage indicatif</p>
+                        <p className="text-lg font-bold font-display">{result.compliance?.status === "potentially_compliant" ? "Favorable*" : result.compliance?.status === "indeterminate" ? "À vérifier" : "Critères non remplis"}</p>
                     </div>
                 </div>
             </div>
@@ -297,13 +304,13 @@ export default function ScreenerModule({ autoSearch }) {
                         label="Dette / Market Cap"
                         value={result.ratios?.debt_ratio}
                         limit={33}
-                        isGood={result.ratios?.debt_ratio < 33}
+                        isGood={result.ratios?.debt_ratio != null && result.ratios.debt_ratio < 33}
                     />
                     <GaugeCard 
                         label="Cash / Market Cap"
                         value={result.ratios?.cash_ratio}
                         limit={33}
-                        isGood={result.ratios?.cash_ratio < 33}
+                        isGood={result.ratios?.cash_ratio != null && result.ratios.cash_ratio < 33}
                     />
                     <div className="p-5 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-500/30 relative overflow-hidden flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-2">
@@ -406,13 +413,13 @@ export default function ScreenerModule({ autoSearch }) {
 // --- SOUS-COMPOSANTS ---
 
 function GaugeCard({ label, value, limit, isGood }) {
-    const percent = Math.min((value / (limit * 1.5)) * 100, 100); 
+    const percent = value == null ? 0 : Math.min((value / (limit * 1.5)) * 100, 100); 
     return (
         <div className="p-5 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/5 relative overflow-hidden group flex flex-col justify-between h-full">
             <div className="flex justify-between items-end mb-3 relative z-10">
                 <span className="text-[10px] font-bold uppercase text-gray-500">{label}</span>
                 <span className={`text-xl font-mono font-bold ${isGood ? 'text-emerald-500' : 'text-red-500'}`}>
-                    {value}%
+                    {value == null ? 'Non disponible' : `${value}%`}
                 </span>
             </div>
             <div className="h-2 w-full bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden relative z-10 mb-2">
@@ -448,7 +455,7 @@ function MetricBox({ label, value, isGood, tooltip }) {
                     </>
                 )}
             </div>
-            <p className={`text-sm font-bold mt-1 ${valueColor}`}>{value}</p>
+            <p className={`text-sm font-bold mt-1 ${valueColor}`}>{value == null ? '—' : value}</p>
         </div>
     );
 }

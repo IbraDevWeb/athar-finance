@@ -1,83 +1,54 @@
+import math
+import re
 import yfinance as yf
 
+SYMBOL_PATTERN = re.compile(r"^[A-Z0-9.\^=\-]{1,20}$")
+
+
 class PortfolioService:
-    """Service de valorisation et purification de portefeuille"""
+    """Estimate position values; never silently substitute purchase prices for live quotes."""
 
-    def analyze_portfolio(self, assets: list) -> dict:
-        total_value = 0
-        total_purification = 0
-        enriched_assets = []
-
-        print(f"💼 Analyse de {len(assets)} actifs...")
-
+    def analyze_portfolio(self, assets):
+        enriched, totals_by_currency, failures = [], {}, []
         for asset in assets:
-            ticker = asset.get('ticker').upper().strip()
-            qty = float(asset.get('qty', 0))
-            asset_type = asset.get('type', 'stock') # 'stock', 'etf_islamic', 'sukuk'
-            
+            if not isinstance(asset, dict):
+                raise ValueError("Chaque position doit être un objet.")
+            symbol = str(asset.get("ticker") or "").strip().upper()
+            if not SYMBOL_PATTERN.fullmatch(symbol):
+                raise ValueError("Symbole de position invalide.")
             try:
-                # Récupération données Yahoo
-                stock = yf.Ticker(ticker)
-                
-                # Prix actuel (avec fallback)
-                history = stock.history(period="1d")
-                if not history.empty:
-                    current_price = history['Close'].iloc[-1]
-                else:
-                    # Si Yahoo échoue, on garde le prix d'achat pour ne pas casser le tableau
-                    current_price = float(asset.get('avg_price', 0))
-
-                # Calcul Valeur
-                current_value = current_price * qty
-                avg_price = float(asset.get('avg_price', 0))
-                gain = current_value - (avg_price * qty)
-                gain_percent = (gain / (avg_price * qty) * 100) if avg_price > 0 else 0
-
-                # --- LOGIQUE DE PURIFICATION ---
-                dividend_yield = stock.info.get('dividendYield', 0) or 0
-                estimated_annual_dividends = current_value * dividend_yield
-                
-                purification_amount = 0
-                purification_rate = 0
-
-                if asset_type == 'stock':
-                    # Règle standard : On purifie ~5% des dividendes perçus
-                    purification_rate = 0.05 
-                    purification_amount = estimated_annual_dividends * purification_rate
-                    
-                elif asset_type == 'etf_islamic':
-                    # Les ETF Sharia (SPUS, HLAL) font souvent le ménage en interne.
-                    # Par sécurité, certains purifient encore une infime partie, mais souvent 0.
-                    purification_rate = 0.0
-                    purification_amount = 0
-                    
-                elif asset_type == 'sukuk':
-                    # Sukuk = Dette Halal = Pas d'intérêts illicites = 0 purification
-                    purification_rate = 0.0
-                    purification_amount = 0
-
-                # Ajout à la liste finale
-                enriched_assets.append({
-                    **asset, # On garde les infos de base
-                    "current_price": round(current_price, 2),
-                    "current_value": round(current_value, 2),
-                    "gain": round(gain, 2),
-                    "gain_percent": round(gain_percent, 2),
-                    "dividend_yield_percent": round(dividend_yield * 100, 2),
-                    "purification_amount": round(purification_amount, 2),
-                    "purification_note": "5% des dividendes" if asset_type == 'stock' else "Exonéré (Déjà purifié/Halal)"
+                quantity = float(asset.get("qty"))
+                avg_price = float(asset.get("avg_price", 0))
+            except (TypeError, ValueError):
+                raise ValueError("Quantité ou prix d'achat invalide.")
+            if not all(math.isfinite(x) for x in (quantity, avg_price)) or quantity <= 0 or avg_price < 0:
+                raise ValueError("Quantité positive et prix d'achat positif ou nul requis.")
+            entry = {**asset, "ticker": symbol, "qty": quantity, "avg_price": avg_price}
+            try:
+                ticker = yf.Ticker(symbol)
+                history = ticker.history(period="5d", auto_adjust=True)
+                if history.empty:
+                    raise ValueError("Aucun cours disponible")
+                price = float(history["Close"].dropna().iloc[-1])
+                if not math.isfinite(price):
+                    raise ValueError("Cours invalide")
+                try:
+                    currency = (ticker.get_history_metadata() or {}).get("currency") or "INCONNUE"
+                except Exception:
+                    currency = "INCONNUE"
+                value = round(price * quantity, 2)
+                entry.update({
+                    "current_price": round(price, 3),
+                    "current_value": value,
+                    "gain": round(value - quantity * avg_price, 2),
+                    "gain_percent": round((price / avg_price - 1) * 100, 2) if avg_price > 0 else None,
+                    "currency": currency,
+                    "as_of": str(history.index[-1]),
+                    "quote_available": True,
                 })
-
-                total_value += current_value
-                total_purification += purification_amount
-
-            except Exception as e:
-                print(f"⚠️ Erreur sur {ticker}: {e}")
-                # En cas d'erreur, on renvoie l'actif tel quel pour ne pas perdre la ligne
-                enriched_assets.append(asset)
-
-        return {
-            "total_value": round(total_value, 2),
-            "total_purification_annual": round(total_purification, 2),
-            "assets": enriched_assets
-        }
+                totals_by_currency[currency] = round(totals_by_currency.get(currency, 0) + value, 2)
+            except Exception:
+                entry.update({"quote_available": False, "current_price": None, "current_value": None, "currency": None})
+                failures.append(symbol)
+            enriched.append(entry)
+        return {"assets": enriched, "totals_by_currency": totals_by_currency, "unavailable": failures}

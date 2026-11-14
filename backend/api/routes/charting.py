@@ -1,60 +1,65 @@
-from flask import Blueprint, request, jsonify
+import math
+import re
+from flask import Blueprint, jsonify, request
 import yfinance as yf
-import pandas as pd
 
-charting_bp = Blueprint('charting', __name__)
+charting_bp = Blueprint("charting", __name__)
+ALLOWED_PERIODS = {"1d": "5m", "5d": "15m", "1mo": "1d", "6mo": "1d", "1y": "1d", "5y": "1wk", "max": "1mo"}
+SYMBOL_PATTERN = re.compile(r"^[A-Z0-9.\^=\-]{1,20}$")
 
-@charting_bp.route('/history', methods=['POST'])
-def get_stock_history():
-    data = request.json
-    ticker_symbol = data.get('ticker', '').upper()
-    period = data.get('period', '1y') # 1d, 5d, 1mo, 6mo, 1y, 5y, max
-    
-    if not ticker_symbol:
-        return jsonify({"error": "Ticker manquant"}), 400
 
+def finite(value):
     try:
-        # Configuration de l'intervalle selon la période
-        interval = "1d"
-        if period in ["1d", "5d"]:
-            interval = "15m" # Plus précis pour le court terme
-        
-        stock = yf.Ticker(ticker_symbol)
-        hist = stock.history(period=period, interval=interval)
-        
-        if hist.empty:
-            return jsonify({"error": "Aucune donnée disponible"}), 404
+        number = float(value)
+        return number if math.isfinite(number) else None
+    except (ValueError, TypeError):
+        return None
 
-        # Formatage des données pour le graphique
-        chart_data = []
-        for date, row in hist.iterrows():
-            chart_data.append({
-                # Convertir la date en string (ISO format)
-                "date": date.strftime('%Y-%m-%d %H:%M') if period in ["1d", "5d"] else date.strftime('%Y-%m-%d'),
-                "price": round(row['Close'], 2),
-                "volume": int(row['Volume']),
-                "open": round(row['Open'], 2),
-                "high": round(row['High'], 2),
-                "low": round(row['Low'], 2)
+
+@charting_bp.post("/history")
+def get_stock_history():
+    body = request.get_json(silent=True) or {}
+    symbol = str(body.get("ticker") or "").strip().upper()
+    period = str(body.get("period") or "1y")
+    if not SYMBOL_PATTERN.fullmatch(symbol):
+        return jsonify(error="Symbole invalide."), 400
+    if period not in ALLOWED_PERIODS:
+        return jsonify(error="Période non prise en charge."), 400
+    try:
+        ticker = yf.Ticker(symbol)
+        history = ticker.history(period=period, interval=ALLOWED_PERIODS[period], auto_adjust=True)
+        if history.empty:
+            return jsonify(error="Aucun historique disponible pour cet actif."), 404
+        rows = []
+        for date, row in history.iterrows():
+            price = finite(row.get("Close"))
+            if price is None:
+                continue
+            rows.append({
+                "date": date.strftime("%Y-%m-%d %H:%M") if period in ("1d", "5d") else date.strftime("%Y-%m-%d"),
+                "price": round(price, 3),
+                "volume": int(finite(row.get("Volume")) or 0),
+                "open": finite(row.get("Open")),
+                "high": finite(row.get("High")),
+                "low": finite(row.get("Low")),
             })
-
-        # Récupération infos temps réel
-        info = stock.info
-        current_price = info.get('currentPrice', info.get('regularMarketPrice', 0))
-        previous_close = info.get('regularMarketPreviousClose', 0)
-        change_p = 0
-        if previous_close:
-            change_p = round(((current_price - previous_close) / previous_close) * 100, 2)
-
+        if not rows:
+            return jsonify(error="Historique inexploitable."), 404
+        closes = [row["price"] for row in rows]
+        previous = closes[-2] if len(closes) > 1 else None
+        change = (closes[-1] - previous) / previous * 100 if previous and previous > 0 else 0
+        try:
+            metadata = ticker.get_history_metadata() or {}
+        except Exception:
+            metadata = {}
         return jsonify({
-            "ticker": ticker_symbol,
-            "name": info.get('longName', ticker_symbol),
-            "current_price": current_price,
-            "change_p": change_p,
-            "currency": info.get('currency', 'USD'),
-            "history": chart_data
+            "ticker": symbol,
+            "name": metadata.get("shortName") or symbol,
+            "current_price": closes[-1],
+            "change_p": round(change, 2),
+            "currency": metadata.get("currency") or "",
+            "history": rows,
+            "delayed": True,
         })
-
-    except Exception as e:
-        print(f"Erreur Charting: {e}")
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        return jsonify(error="Impossible de récupérer l'historique boursier."), 503
